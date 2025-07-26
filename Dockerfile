@@ -39,6 +39,8 @@ RUN pip3 install scipy python-dotenv
 
 # build ros env
 RUN mkdir -p ws/src
+RUN cd ws/src \
+ && git clone https://github.com/dtc-pronto/common
 RUN cd ~/ws \
  && catkin config --extend /opt/ros/noetic \
  && catkin build --no-status -DCMAKE_BUILD_TYPE=Release
