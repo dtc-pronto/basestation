@@ -25,6 +25,7 @@ catkin_package()
 
 catkin_install_python(PROGRAMS
     scripts/ros_node.py
-    scripts/spoof_node.py
+    scripts/spoof_gps_node.py
+    scripts/spoof_status_node.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )

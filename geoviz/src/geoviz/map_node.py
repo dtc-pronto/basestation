@@ -7,7 +7,7 @@
 import utm
 import rospy
 from sensor_msgs.msg import NavSatFix
-from dtc_msgs.msg import NavSatFixArray
+from dtc_msgs.msg import NavSatFixArray, JackalStatus
 
 from geoviz.map_app import MapApp
 
@@ -31,6 +31,7 @@ class MapNode:
 
         if "phobos" in robots:
             rospy.Subscriber("/phobos/ublox/fix", NavSatFix, self.phobos_callback)
+            rospy.Subscriber("/phobos/status", JackalStatus, self.phobos_health_callback)
         if "deimos" in robots:
             rospy.Subscriber("/deimos/ublox/fix", NavSatFix, self.deimos_callback)
         if "oberon" in robots:
@@ -50,6 +51,10 @@ class MapNode:
 
     def phobos_callback(self, msg : NavSatFix) -> None:
         self.app_.update_jackal(msg.latitude, msg.longitude, "phobos") 
+    
+    def phobos_health_callback(self, msg : JackalStatus) -> None:
+        status = {"robot_name": "phobos", "rgb": True, "thermal": True, "gps": True, "rtk":False}
+        self.app_.update_status(status)
 
     def deimos_callback(self, msg : NavSatFix) -> None:
         self.app_.update_jackal(msg.latitude, msg.longitude, "deimos")

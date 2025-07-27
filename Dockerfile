@@ -37,6 +37,11 @@ RUN sudo apt-get install -y python3-pip
 RUN pip3 install flask folium flask_socketio utm
 RUN pip3 install scipy python-dotenv
 
+# install rtk dependencies
+RUN pip install pyzmq pyserial pyrtcm
+RUN sudo usermod -a -G dialout $USER
+RUN sudo apt-get install -y ros-noetic-rtcm-msgs
+
 # build ros env
 RUN mkdir -p ws/src
 RUN cd ws/src \
