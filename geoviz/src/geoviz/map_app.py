@@ -12,7 +12,7 @@ from flask_socketio import SocketIO
 from threading import Thread
 from dotenv import load_dotenv
 
-from typing import Tuple
+from typing import Tuple, Dict
 
 class MapApp:
 
@@ -73,6 +73,9 @@ class MapApp:
                       "popup": popup}
         
         self.socketio_.emit('casualty_update', point_data)
+
+    def update_status(self, health_data : Dict) -> None:
+        self.socketio_.emit('health_update', health_data)
 
     def run_in_thread(self) -> None:
         thread = Thread(target=self.run)

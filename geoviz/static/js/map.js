@@ -38,6 +38,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var jackalMarkers = {}; // Store current jackal markers
     var droneMarker = null; // Store current drone marker
     var casualtyMarkers = {}; // Store casualty markers (persistent)
+    var robotHealthData = {}; // Store health data for each robot
+    
     var jackalColors = {
         'phobos': '#28B463',    // Green for Phobos
         'deimos': '#2980B9',     // Blue for Deimos
@@ -176,6 +178,61 @@ document.addEventListener('DOMContentLoaded', function() {
             .addTo(objectsLayer);
 
         console.log(`Added casualty ${casualtyId} at position: ${lat}, ${lon}`);
+    }
+
+    // Function to create or update robot health status card
+    function updateRobotHealth(healthData) {
+        var robotName = healthData.robot_name.toLowerCase();
+        var container = document.getElementById('health-status-container');
+        var existingCard = document.getElementById('health-card-' + robotName);
+        
+        // Store the health data
+        robotHealthData[robotName] = healthData;
+        
+        if (!existingCard) {
+            // Create new health card
+            var cardHtml = `
+                <div class="robot-health-card" id="health-card-${robotName}">
+                    <div class="robot-name">${robotName}</div>
+                    <div class="sensor-grid" id="sensor-grid-${robotName}">
+                        <!-- Sensors will be added here -->
+                    </div>
+                    <div class="last-update" id="last-update-${robotName}">
+                        Last Update: ${new Date().toLocaleTimeString()}
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+            existingCard = document.getElementById('health-card-' + robotName);
+        }
+        
+        // Update sensor grid
+        var sensorGrid = document.getElementById('sensor-grid-' + robotName);
+        var sensorHtml = '';
+        
+        // Iterate through all sensors in the health data (excluding robot_name)
+        Object.keys(healthData).forEach(function(key) {
+            if (key !== 'robot_name') {
+                var value = healthData[key];
+                var statusClass = value ? 'healthy' : 'unhealthy';
+                var statusText = value ? 'TRUE' : 'FALSE';
+                
+                sensorHtml += `
+                    <div class="sensor-status">
+                        <span class="sensor-name">${key}</span>
+                        <span class="sensor-value ${statusClass}">${statusText}</span>
+                    </div>
+                `;
+            }
+        });
+        
+        sensorGrid.innerHTML = sensorHtml;
+        
+        // Update timestamp
+        document.getElementById('last-update-' + robotName).textContent = 
+            'Last Update: ' + new Date().toLocaleTimeString();
+        
+        console.log(`Updated health status for ${robotName}:`, healthData);
     }
 
     // Create a legend
@@ -322,6 +379,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Handle health status updates
+    socket.on('health_update', function(data) {
+        console.log('Received health update:', data);
+        
+        if (data && typeof data === 'object' && data.robot_name) {
+            updateRobotHealth(data);
+        } else {
+            console.error('Invalid health update data:', data);
+        }
+    });
+
     // Add layer control for toggling markers only
     var overlayLayers = {
         "Robot Markers": objectsLayer,
@@ -357,6 +425,13 @@ document.addEventListener('DOMContentLoaded', function() {
         addCasualty(casualtyId, lat, lon, 'Test Casualty: ' + casualtyId);
     };
 
+    window.addTestHealth = function(robotName, sensors) {
+        robotName = robotName || 'phobos';
+        sensors = sensors || {rgb: true, thermal: false, gps: true, rtk: false};
+        var healthData = Object.assign({robot_name: robotName}, sensors);
+        updateRobotHealth(healthData);
+    };
+
     window.clearAllCasualties = function() {
         Object.keys(casualtyMarkers).forEach(function(casualtyId) {
             objectsLayer.removeLayer(casualtyMarkers[casualtyId]);
@@ -365,5 +440,5 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Cleared all casualties');
     };
 
-    console.log('Map.js loaded successfully. Use addTestJackal(), addTestDrone(), or addTestCasualty() to test.');
+    console.log('Map.js loaded successfully. Use addTestJackal(), addTestDrone(), addTestCasualty(), or addTestHealth() to test.');
 });
