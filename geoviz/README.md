@@ -3,7 +3,7 @@
 This tool always you to interface position topics with a MapBox satellite map. It is a ros package called `geoviz`. It subscirbes to the robot locations and casualties and plots them on an interactive satillite map. 
 
 ### Running
-Run this with `roslaunch geoviz viz.launch`, this will start the map server on your local machine. To view the map enter `127.0.0.1` into your browser. 
+Run this with `roslaunch geoviz viz.launch`, this will start the map server on your local machine. To view the map enter `127.0.0.1:5000` into your browser. 
 
 You can also run this on a remote server by setting the ip and port 
 ```
