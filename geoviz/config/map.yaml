@@ -5,6 +5,8 @@ app:
   robots:
     - "phobos"
     - "deimos"
+    - "oberon"
+    - "titania"
     - "dione"
 
 map:
