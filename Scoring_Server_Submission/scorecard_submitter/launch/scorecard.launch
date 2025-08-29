@@ -1,0 +1,7 @@
+<launch>
+  <node name="scorecard_submission_node"
+        pkg="scorecard_submitter"
+        type="submission_node.py"
+        output="screen"
+        required="true" />
+</launch>

@@ -1,4 +1,0 @@
-<launch>
-    <node pkg="geoviz" type="spoof_gps_node.py" name="gps_spoof" output="screen"/>
-    <node pkg="geoviz" type="spoof_status_node.py" name="status_spoof" output="screen"/>
-</launch>

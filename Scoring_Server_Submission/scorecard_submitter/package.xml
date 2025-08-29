@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>scorecard_submitter</name>
+  <version>0.0.1</version>
+  <description>Package for submitting scorecard results to the server.</description>
+
+  <!-- Maintainer -->
+  <maintainer email="zedward@seas.upenn.edu">Edward Zhang</maintainer>
+
+  <!-- License -->
+  <license>BSD</license>
+
+  <!-- Build tool -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Runtime dependencies -->
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+
+  <export>
+  </export>
+</package>
