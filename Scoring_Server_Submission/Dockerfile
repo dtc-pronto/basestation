@@ -46,6 +46,8 @@ RUN sudo apt-get update && sudo apt-get install -y ros-noetic-vision-msgs
 
 RUN sudo apt-get update && sudo apt-get install -y iputils-ping openjdk-11-jre
 RUN sudo apt-get update && sudo apt-get install -y ros-noetic-wfov-camera-msgs
+RUN sudo apt-get update && sudo apt-get install -y ros-noetic-vision-opencv
+RUN sudo apt-get update && sudo apt-get install -y ros-noetic-cv-bridge
 
 # build ros env
 ARG CACHE_BUST=1

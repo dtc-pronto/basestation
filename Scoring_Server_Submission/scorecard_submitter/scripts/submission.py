@@ -5,43 +5,33 @@ from dotenv import load_dotenv
 import ast
 import rospy
 
+#TODO: add casulty_id, team, system, time_ago to submit_scorecard and submit_image functions
+def submit_image(image_path):
+    # Load .env file
+    load_dotenv()
 
-from enum import IntEnum
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
 
-class TraumaHead(IntEnum):
-    ABSENT = 0
-    PRESENT = 1
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+    }
 
-class TraumaTorso(IntEnum):
-    ABSENT = 0
-    PRESENT = 1
+    files = {
+        'file': open(image_path, 'rb')
+    }
 
-class TraumaLowerExt(IntEnum):
-    ABSENCE = 0
-    WOUND = 1
-    AMPUTATION = 2
+    data = {
+        "casualty_id": 0,
+        "team": "test_team",
+        "system": "test_system",
+        "time_ago": 0
+    }
 
-class TraumaUpperExt(IntEnum):
-    ABSENCE = 0
-    WOUND = 1
-    AMPUTATION = 2
-
-class AlertnessOcular(IntEnum):
-    OPEN = 0
-    CLOSED = 1
-    UNTESTABLE = 2
-
-class AlertnessVerbal(IntEnum):
-    NORMAL = 0
-    ABNORMAL = 1
-    ABSENT = 2
-    UNTESTABLE = 3
-
-class AlertnessMotor(IntEnum):
-    NORMAL = 0
-    ABNORMAL = 1
-    ABSENT = 2
-    UNTESTABLE = 3
+    r = requests.post(f"{BASE_URL}/api/casualty_image", headers=headers, files=files, data=data)
+    print(r.status_code, r.json())
+    return r.json().get("image_id", None)
 
 
 def convert_to_enum(value):
@@ -60,6 +50,87 @@ def convert_to_enum(value):
     elif (value == "untestable"):
         return 3
 
+def start_run():
+    load_dotenv()
+    print("Creating new run...")
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+
+    url = f"{BASE_URL}/api/run/new"
+    headers = {"accept": "application/json"}
+
+    r = requests.get(url, headers=headers)
+    print(r.status_code, r.json())
+
+    print("Starting run...")
+    url = f"{BASE_URL}/api/run/start"
+    headers = {"accept": "application/json"}
+    
+    response = requests.get(url, headers=headers)
+    print(response.status_code, r.json())
+
+def update_scorecard(run_id, scorecard_id):
+    load_dotenv()
+    print("Updating scorecard...")
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+    
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+      "hr": {
+        "value": 0,
+        "time_ago": 0,
+      },
+      "rr": {
+        "value": 0,
+        "time_ago": 0,
+      },
+      "alertness_ocular": {
+        "value": 0,
+        "time_ago": 0,
+      },
+      "alertness_verbal": {
+        "value": 0,
+        "time_ago": 0,
+      },
+      "alertness_motor": {
+        "value": 0,
+        "time_ago": 0,
+      },
+      "severe_hemorrhage": {
+        "value": 0,
+        "time_ago": 0,
+      },
+      "respiratory_distress": {
+        "value": 0,
+        "time_ago": 0,
+      },
+      "trauma_head": 0,
+      "trauma_torso": 0,
+      "trauma_lower_ext": 0,
+      "trauma_upper_ext": 0,
+      "temp": {
+        "value": 0,
+        "time_ago": 0,
+      },
+      "casualty_id": 0,
+      "team": "test_team",
+      "system": "test_system",
+      "location": {
+        "latitude": 0,
+        "longitude": 0,
+        "time_ago": 0,
+      }
+    }
+
+    r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
+    print(r.status_code, r.json())
+
 def submit_scorecard(raw_report_str=None):
 
     # Load .env file
@@ -74,34 +145,36 @@ def submit_scorecard(raw_report_str=None):
         "Content-Type": "application/json"
     }
 
+    #time_now = rospy.Time.now().secs
+
     payload = {
       "hr": {
         "value": 0,
-        "time_ago": rospy.Time.now().secs
+        "time_ago": 0,
       },
       "rr": {
         "value": 0,
-        "time_ago": rospy.Time.now().secs
+        "time_ago": 0,
       },
       "alertness_ocular": {
-        "value": 2,
-        "time_ago": rospy.Time.now().secs
+        "value": 0,
+        "time_ago": 0,
       },
       "alertness_verbal": {
         "value": 0,
-        "time_ago": rospy.Time.now().secs
+        "time_ago": 0,
       },
       "alertness_motor": {
         "value": 0,
-        "time_ago": rospy.Time.now().secs
+        "time_ago": 0,
       },
       "severe_hemorrhage": {
-        "value": 1,
-        "time_ago": rospy.Time.now().secs
+        "value": 0,
+        "time_ago": 0,
       },
       "respiratory_distress": {
-        "value": 1,
-        "time_ago": rospy.Time.now().secs
+        "value": 0,
+        "time_ago": 0,
       },
       "trauma_head": 0,
       "trauma_torso": 0,
@@ -109,15 +182,15 @@ def submit_scorecard(raw_report_str=None):
       "trauma_upper_ext": 0,
       "temp": {
         "value": 0,
-        "time_ago": rospy.Time.now().secs
+        "time_ago": 0,
       },
-      "casualty_id": 5,
+      "casualty_id": 0,
       "team": "test_team",
       "system": "test_system",
       "location": {
         "latitude": 0,
         "longitude": 0,
-        "time_ago": rospy.Time.now().secs
+        "time_ago": 0,
       }
     }
 
@@ -132,7 +205,7 @@ def submit_scorecard(raw_report_str=None):
                             payload[key] = convert_to_enum(value)
                         elif key in ["alertness_ocular", "alertness_verbal", "alertness_motor"]:
                             payload[key]["value"] = convert_to_enum(value)
-                            payload[key]["time_ago"] = rospy.Time.now().secs
+                            payload[key]["time_ago"] = 0
                         elif key in ["hr", "rr", "temp"]:
                             payload[key]["value"] = int(value)
                             payload[key]["time_ago"] = rospy.Time.now().secs
@@ -167,4 +240,16 @@ def submit_scorecard(raw_report_str=None):
 
 if __name__ == "__main__":
     # code that only runs when script is executed directly
+    start_run()
     submit_scorecard()
+    submit_scorecard()
+    submit_scorecard()
+    submit_scorecard()
+    submit_scorecard()
+    submit_scorecard()
+    update_scorecard(1, 1)
+    submit_image("1755288246triage_image.jpg")
+
+
+    
+    

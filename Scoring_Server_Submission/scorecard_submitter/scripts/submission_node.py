@@ -27,21 +27,38 @@ from wfov_camera_msgs.msg import WFOVImage
 """
 
 import rospy
-from submission import submit_scorecard
+from submission import submit_scorecard, start_run, submit_image
 
 from std_msgs.msg import Bool, String, UInt8, Float32
 from dtc_msgs.msg import ScoreCard
+from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
+import cv2
 
+#TODO: Add a hashing dictionary to keep track of victims and corresponding reports
 
 class SubmissionNode:
 
     def __init__(self):
         print("[Scorecard][STATUS] Submission Node initialized")
-
+        start_run()
         #Subscribe to scorecard_topic
-        self.report_sub = rospy.Subscriber("/deimos/report_status", String, self.DeimosScoreCallback)
+        self.deimos_report_sub = rospy.Subscriber("/deimos/report_status", String, self.DeimosScoreCallback)
+        self.deimos_image_sub = rospy.Subscriber("/deimos/camera/image", Image, self.DeimosImageCallback)
     
+    def DeimosImageCallback(self, msg):
+        print("[Scorecard][STATUS] Received image from /deimos/camera/image")
+        bridge = CvBridge()
+        cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+        timestamp = int(rospy.Time.now().to_sec())
+        image_path = f"/tmp/deimos_image_{timestamp}.jpg"
+        # Save the image to a file
+        
+        cv2.imwrite(image_path, cv_image)
+        print(f"[Scorecard][STATUS] Image saved to {image_path}")
+        image_id = submit_scorecard(image_path=image_path)
+        print(f"[Scorecard][STATUS] Image submitted with ID: {image_id}")
+
     def DeimosScoreCallback(self, msg):
         print("[Scorecard][STATUS] Received report from /deimos/report_status")
 
