@@ -20,6 +20,9 @@ docker run --rm -it \
   -e DISPLAY="${DISPLAY}" \
   -e QT_X11_NO_MITSHM=1 \
   -e LIBGL_ALWAYS_SOFTWARE=1 \
+  -e LIBGL_ALWAYS_SOFTWARE=1 \
+  -e LIBGL_DRI3_DISABLE=1 \
+  -e VDPAU_DRIVER=dummy \
   --name "${CONTAINER_NAME}" \
   "${IMAGE_NAME}"
 

@@ -2,24 +2,28 @@
 """
 UDP Viewer + Camera Switch GUI (no ROS on laptop)
 -------------------------------------------------
+
 This PyQt6 GUI does two things:
-  1) Starts/stops `ffplay` to view a single UDP stream (e.g., udp://<your_laptop_ip>:8554)
-  2) Sends a small JSON command over TCP to the robot's `command_listener_node.py`
-     (default port 8001) telling it to switch camera *mode* between 'day' and 'night'.
+
+1. Starts/stops `ffplay` to view a single UDP stream (e.g., udp://<your_laptop_ip>:8554)
+2. Sends a small JSON command over TCP to the robot's `command_listener_node.py`
+    (default port 8001) telling it to switch camera *mode* between 'day' and 'night'.
 
 Robot side (already provided by you):
-- `command_listener_node.py` listens on TCP port 8001 for JSON and republishes it to `/stream_config`. fileciteturn0file2
-- `streamer_node.py` subscribes to `/stream_config` and switches topics/ffmpeg based on keys
-  {mode, resolution, frame_rate, ip_address, port}. It publishes UDP to `udp://ip_address:port`. fileciteturn0file1
+
+* `command_listener_node.py` listens on TCP port 8001 for JSON and republishes it to `/stream_config`.
+* `streamer_node.py` subscribes to `/stream_config` and switches topics/ffmpeg based on keys
+  {mode, resolution, frame_rate, ip_address, port}. It publishes UDP to `udp://ip_address:port`.
 
 So the laptop GUI only needs: TCP client + ffplay. No ROS needed on the laptop.
 
 How to use (inside container or bare metal)
-- Fill in Robot IP (where command_listener_node runs), Command Port (8001),
+
+* Fill in Robot IP (where command_listener_node runs), Command Port (8001),
   Local Receive IP (your laptop's IP), UDP Port (e.g., 8554), FPS, Resolution.
-- Click **Start View + Apply**: launches ffplay and sends JSON with current mode.
-- Click **Switch Camera**: toggles between 'day' and 'night' and sends JSON again.
-- Click **Stop View**: kills ffplay (robot keeps streaming until you switch/stop on robot).
+* Click **Start View + Apply**: launches ffplay and sends JSON with current mode.
+* Click **Switch Camera**: toggles between 'day' and 'night' and sends JSON again.
+* Click **Stop View**: kills ffplay (robot keeps streaming until you switch/stop on robot).
 
 """
 import json
@@ -201,13 +205,10 @@ class Main(QMainWindow):
         self._stop_view()
         return super().closeEvent(e)
 
-
 def main():
     app = QApplication(sys.argv)
     w = Main(); w.show()
     sys.exit(app.exec())
 
-
 if __name__ == "__main__":
     main()
-

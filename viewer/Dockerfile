@@ -17,12 +17,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 libegl1 libdbus-1-3 xauth \
     # fonts (some Qt builds choke without fontconfig/fonts)
     libgl1-mesa-dri \
-    libsdl2-2.0-0 \   
+    libsdl2-2.0-0 \
+    vlc libvlc5 libvlccore9 libsdl2-2.0-0 \   
     libfontconfig1 fonts-dejavu-core \
   && rm -rf /var/lib/apt/lists/*
 
 # Python deps (PyQt6 ships Qt in wheels)
-RUN pip install --no-cache-dir PyQt6
+RUN pip install --no-cache-dir PyQt6 python-vlc
 
 # App
 WORKDIR /app
