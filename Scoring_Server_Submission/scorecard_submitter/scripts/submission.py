@@ -131,21 +131,8 @@ def update_scorecard(run_id, scorecard_id):
     r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
     print(r.status_code, r.json())
 
-def submit_scorecard(raw_report_str=None):
-
-    # Load .env file
-    load_dotenv()
-
-    TOKEN = os.getenv("TOKEN")
-    BASE_URL = os.getenv("BASE_URL")
-
-    headers = {
-        "accept": "application/json",
-        "Authorization": TOKEN,
-        "Content-Type": "application/json"
-    }
-
-    #time_now = rospy.Time.now().secs
+def parse_report_string(report_str):
+  #time_now = rospy.Time.now().secs
 
     payload = {
       "hr": {
@@ -194,10 +181,10 @@ def submit_scorecard(raw_report_str=None):
       }
     }
 
-    if raw_report_str:
+    if report_str:
     # Parse the raw report string into a dictionary
         try:
-            report_dict = ast.literal_eval(raw_report_str)
+            report_dict = ast.literal_eval(report_str)
             if isinstance(report_dict, dict):
                 for key, value in report_dict.items():
                     if key in payload:
@@ -231,6 +218,22 @@ def submit_scorecard(raw_report_str=None):
         except Exception as e:
             print(f"Error parsing report string: {e}")
     #pretty print the payload
+    return payload
+
+def submit_scorecard(payload):
+
+    # Load .env file
+    load_dotenv()
+
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
+    
     import json
     print("Submitting payload:")
     print(json.dumps(payload, indent=2))
