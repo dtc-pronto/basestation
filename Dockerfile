@@ -36,6 +36,7 @@ RUN sudo apt-get install -y python3-catkin-tools
 RUN sudo apt-get install -y python3-pip
 RUN pip3 install flask folium flask_socketio utm
 RUN pip3 install scipy python-dotenv
+RUN sudo apt-get install -y ros-noetic-vision-msgs
 
 # install rtk dependencies
 RUN pip install pyzmq pyserial pyrtcm
