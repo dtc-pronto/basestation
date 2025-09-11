@@ -6,7 +6,7 @@ import ast
 import rospy
 
 #TODO: add casulty_id, team, system, time_ago to submit_scorecard and submit_image functions
-def submit_image(image_path):
+def submit_image(image_path, time, id):
     # Load .env file
     load_dotenv()
 
@@ -23,10 +23,10 @@ def submit_image(image_path):
     }
 
     data = {
-        "casualty_id": 0,
-        "team": "test_team",
-        "system": "test_system",
-        "time_ago": 0
+        "casualty_id": id,
+        "team": "Penn",
+        "system": "PennPRONTO",
+        "time_ago": rospy.Time.now().secs - time,
     }
 
     r = requests.post(f"{BASE_URL}/api/casualty_image", headers=headers, files=files, data=data)
@@ -69,9 +69,32 @@ def start_run():
     response = requests.get(url, headers=headers)
     print(response.status_code, r.json())
 
-def update_scorecard(run_id, scorecard_id):
+def update_casualty(payload):
     load_dotenv()
     print("Updating scorecard...")
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+    
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
+
+    #Go through all time_ago fields and update them to be the difference between now and the time in the payload
+    current_time = rospy.Time.now().secs
+    for key in payload:
+        for subkey in payload[key]:
+            if subkey == "time_ago":
+                if isinstance(payload[key], dict) and "time_ago" in payload[key]:
+                    payload[key]["time_ago"] = current_time - payload[key]["time_ago"]
+    
+    r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
+    print(r.status_code, r.json())
+
+def report_new_casualty(id, lat, long, time):
+    load_dotenv()
+    print("new casualty...")
     TOKEN = os.getenv("TOKEN")
     BASE_URL = os.getenv("BASE_URL")
     
@@ -115,20 +138,20 @@ def update_scorecard(run_id, scorecard_id):
       "trauma_lower_ext": 0,
       "trauma_upper_ext": 0,
       "temp": {
-        "value": 0,
-        "time_ago": 0,
+        "value": 98,
+        "time_ago": rospy.Time.now().secs - time,
       },
-      "casualty_id": 0,
-      "team": "test_team",
-      "system": "test_system",
+      "casualty_id": id,
+      "team": "Penn",
+      "system": "PennPRONTO",
       "location": {
-        "latitude": 0,
-        "longitude": 0,
-        "time_ago": 0,
+        "latitude": lat,
+        "longitude": long,
+        "time_ago": rospy.Time.now().secs - time,
       }
     }
 
-    r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
+    r = requests.post(f"{BASE_URL}/api/initial_report", headers=headers, json=payload)
     print(r.status_code, r.json())
 
 def parse_report_string(report_str):
@@ -168,7 +191,7 @@ def parse_report_string(report_str):
       "trauma_lower_ext": 0,
       "trauma_upper_ext": 0,
       "temp": {
-        "value": 0,
+        "value": 98,
         "time_ago": 0,
       },
       "casualty_id": 0,
@@ -219,40 +242,6 @@ def parse_report_string(report_str):
             print(f"Error parsing report string: {e}")
     #pretty print the payload
     return payload
-
-def submit_scorecard(payload):
-
-    # Load .env file
-    load_dotenv()
-
-    TOKEN = os.getenv("TOKEN")
-    BASE_URL = os.getenv("BASE_URL")
-
-    headers = {
-        "accept": "application/json",
-        "Authorization": TOKEN,
-        "Content-Type": "application/json"
-    }
-    
-    import json
-    print("Submitting payload:")
-    print(json.dumps(payload, indent=2))
-
-    r = requests.post(f"{BASE_URL}/api/initial_report", headers=headers, json=payload)
-    print(r.status_code, r.json())
-
-if __name__ == "__main__":
-    # code that only runs when script is executed directly
-    start_run()
-    submit_scorecard()
-    submit_scorecard()
-    submit_scorecard()
-    submit_scorecard()
-    submit_scorecard()
-    submit_scorecard()
-    update_scorecard(1, 1)
-    submit_image("1755288246triage_image.jpg")
-
 
     
     
