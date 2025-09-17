@@ -1,0 +1,37 @@
+name: Update Submodules
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Daily at 9 AM UTC
+  workflow_dispatch:      # Allows manual triggering from GitHub UI
+
+jobs:
+  update-submodules:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.SUBMODULE_TOKEN }}
+          fetch-depth: 0
+      
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      
+      - name: Update submodules to latest
+        run: |
+          git submodule update --remote --recursive
+          
+      - name: Check for changes and commit
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "chore: update submodules to latest versions"
+            git push
+            echo "Submodules updated and pushed"
+          else
+            echo "No submodule updates needed"
+          fi
