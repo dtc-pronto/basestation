@@ -40,3 +40,5 @@ venv.bak/
 *.swp
 *.swo
 *~
+
+*.bag
