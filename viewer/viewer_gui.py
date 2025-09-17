@@ -106,7 +106,7 @@ class Main(QMainWindow):
         self.mode = QComboBox(); self.mode.addItems(["day", "night"])
 
         # ffplay args
-        self.ffplay_args = QLineEdit("-fflags nobuffer -flags low_delay -framedrop -fast -hide_banner -loglevel warning")
+        self.ffplay_args = QLineEdit("-fflags nobuffer -flags low_delay -framedrop -fast -probesize 200k -analyzeduration 100k -fflags discardcorrupt -sync video -hide_banner -loglevel warning")
 
         # Buttons
         self.btn_start = QPushButton("Start View + Apply")
@@ -223,7 +223,7 @@ class Main(QMainWindow):
             self.log.append(f"Robot response: {resp}")
 
     def _start_viewer(self, cfg: StreamCmd):
-        url = f"udp://{cfg.ip_address}:{cfg.port}"
+        url = f"udp://{cfg.ip_address}:{cfg.port}?pkt_size=1316&fifo_size=500000&overrun_nonfatal=1"
         self._stop_view()
         cmd = self._build_cmd(url)
         self.log.append("$ " + " ".join(shlex.quote(c) for c in cmd))
