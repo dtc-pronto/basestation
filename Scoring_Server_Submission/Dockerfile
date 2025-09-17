@@ -48,15 +48,7 @@ RUN sudo apt-get update && sudo apt-get install -y iputils-ping openjdk-11-jre
 RUN sudo apt-get update && sudo apt-get install -y ros-noetic-wfov-camera-msgs
 RUN sudo apt-get update && sudo apt-get install -y ros-noetic-vision-opencv
 RUN sudo apt-get update && sudo apt-get install -y ros-noetic-cv-bridge
-
-# build ros env
-ARG CACHE_BUST=1
-RUN mkdir -p ws/src \
- && rm -rf ws/src/common \
- && git clone https://github.com/dtc-pronto/common ws/src/common
-
-COPY watchstate /home/${USER}/ws/src/common/MOCHA/interface_rajant/scripts/thirdParty/watchstate
-
+`
 RUN cd ~/ws \
  && catkin config --extend /opt/ros/noetic \
  && catkin build --no-status -DCMAKE_BUILD_TYPE=Release

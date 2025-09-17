@@ -62,9 +62,11 @@ class SubmissionNode:
         start_run()
         #Subscribe to scorecard_topic
         self.deimos_report_sub = rospy.Subscriber("/deimos/report_status", String, self.DeimosScoreCallback)
-        self.deimos_image_sub = rospy.Subscriber("/deimos/processed_image", Image, self.DeimosImageCallback)
+        self.deimos_image_sub = rospy.Subscriber("/deimos/camera/image", Image, self.DeimosImageCallback)
+        self.deimos_report_sub = rospy.Subscriber("/phobos/report_status", String, self.PhobosScoreCallback)
+        self.deimos_image_sub = rospy.Subscriber("/phobos/camera/image", Image, self.PhobosImageCallback)
 
-        self.dione_position_sub = rospy.Subscriber("/casualty_info", CasualtyFixArray, self.CasualtyPosCallback)
+        self.dione_position_sub = rospy.Subscriber("/dione/casualty_info", CasualtyFixArray, self.CasualtyPosCallback)
 
         self.casualty_dict_list = []
         self.most_recent_deimos_image_path = None
