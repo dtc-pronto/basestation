@@ -48,7 +48,6 @@ RUN sudo apt-get update && sudo apt-get install -y iputils-ping openjdk-11-jre
 RUN sudo apt-get update && sudo apt-get install -y ros-noetic-wfov-camera-msgs
 RUN sudo apt-get update && sudo apt-get install -y ros-noetic-vision-opencv
 RUN sudo apt-get update && sudo apt-get install -y ros-noetic-cv-bridge
-`
 RUN cd ~/ws \
  && catkin config --extend /opt/ros/noetic \
  && catkin build --no-status -DCMAKE_BUILD_TYPE=Release

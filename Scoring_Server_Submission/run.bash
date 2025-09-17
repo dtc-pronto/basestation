@@ -12,5 +12,4 @@ docker run -it --rm \
     -e XAUTHORITY=$XAUTH \
     --name dtc-basestation \
     dtc-basestation:scorecard \
-    bash -c "cd ws && catkin build && exec bash"
 xhost -
