@@ -61,18 +61,18 @@ class SubmissionNode:
         print("[Scorecard][STATUS] Submission Node initialized")
         start_run()
         #Subscribe to scorecard_topic
-        self.deimos_report_sub = rospy.Subscriber("/deimos/report_status", String, self.DeimosScoreCallback)
-        self.deimos_image_sub = rospy.Subscriber("/deimos/camera/image", Image, self.DeimosImageCallback)
-        self.deimos_report_sub = rospy.Subscriber("/phobos/report_status", String, self.PhobosScoreCallback)
-        self.deimos_image_sub = rospy.Subscriber("/phobos/camera/image", Image, self.PhobosImageCallback)
+        self.deimos_report_sub = rospy.Subscriber("/deimos/report_status", String, self.deimosScoreCallback)
+        self.deimos_image_sub = rospy.Subscriber("/deimos/camera/image", Image, self.deimosImageCallback)
+        self.deimos_report_sub = rospy.Subscriber("/phobos/report_status", String, self.phobosScoreCallback)
+        self.deimos_image_sub = rospy.Subscriber("/phobos/camera/image", Image, self.phobosImageCallback)
 
-        self.dione_position_sub = rospy.Subscriber("/dione/casualty_info", CasualtyFixArray, self.CasualtyPosCallback)
+        self.dione_position_sub = rospy.Subscriber("/dione/casualty_info", CasualtyFixArray, self.casualtyPosCallback)
 
         self.casualty_dict_list = []
         self.most_recent_deimos_image_path = None
         #Add the paths of other robots
     
-    def CasualtyPosCallback(self, msg):
+    def casualtyPosCallback(self, msg):
         print(len(msg.casualties))
         print(len(self.casualty_dict_list))
         if len(msg.casualties) > len(self.casualty_dict_list):
@@ -106,7 +106,7 @@ class SubmissionNode:
                 json.dump(self.casualty_dict_list, f, indent=2)
             print(self.casualty_dict_list)
 
-    def DeimosImageCallback(self, msg):
+    def deimosImageCallback(self, msg):
         print("[Scorecard][STATUS] Received image from /deimos/camera/image")
         bridge = CvBridge()
         cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
@@ -119,7 +119,7 @@ class SubmissionNode:
         print(f"[Scorecard][STATUS] Image saved to {image_path}")
         
 
-    def DeimosScoreCallback(self, msg):
+    def deimosScoreCallback(self, msg):
         print("[Scorecard][STATUS] Received report from /deimos/report_status")
         print("[Scorecard][STATUS] Publishing report status")
 
@@ -144,6 +144,43 @@ class SubmissionNode:
         image_id = submit_image(image_path=self.most_recent_deimos_image_path, time=timestamp, id=self.casualty_dict_list[closest_casualty_idx]["id"])
         print(f"[Scorecard][STATUS] Image submitted with ID: {image_id}")      
         
+    def phobosImageCallback(self, msg):
+        print("[Scorecard][STATUS] Received image from /phobos/camera/image")
+        bridge = CvBridge()
+        cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
+        timestamp = int(rospy.Time.now().to_sec())
+        image_path = f"/data/deimos_image_{timestamp}.jpg"
+        self.most_recent_deimos_image_path = image_path
+        # Save the image to a file
+        
+        cv2.imwrite(image_path, cv_image)
+        print(f"[Scorecard][STATUS] Image saved to {image_path}")
+        
+
+    def phobosScoreCallback(self, msg):
+        print("[Scorecard][STATUS] Received report from /phobos/report_status")
+        print("[Scorecard][STATUS] Publishing report status")
+
+        #extract the string from the message
+        report_str = msg.data
+        print(report_str)
+
+        _, _, closest_casualty_idx, payload = closest_casualty(report_str, self.casualty_dict_list)
+        
+        if closest_casualty_idx == -1:
+            print("[Scorecard][WARNING] No casualties available to assign report to.")
+            return
+        
+        print(f"[Scorecard][STATUS] Closest casualty index: {closest_casualty_idx}")
+        payload["casualty_id"] = self.casualty_dict_list[closest_casualty_idx]["id"]
+        payload["location"]["longitude"], payload["location"]["latitude"] = self.casualty_dict_list[closest_casualty_idx]["position"]
+        payload["location"]["time_ago"] = self.casualty_dict_list[closest_casualty_idx]["time"]
+        self.casualty_dict_list[closest_casualty_idx]["report"] = payload
+        update_casualty(payload)  
+
+        timestamp = int(self.most_recent_deimos_image_path.split("_")[-1].split(".")[0])
+        image_id = submit_image(image_path=self.most_recent_deimos_image_path, time=timestamp, id=self.casualty_dict_list[closest_casualty_idx]["id"])
+        print(f"[Scorecard][STATUS] Image submitted with ID: {image_id}")      
 
 if __name__ == "__main__":
     rospy.init_node("scorecard_submitter")

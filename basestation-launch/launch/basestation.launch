@@ -20,7 +20,7 @@
   </group>
 
   <group if="$(arg sender)">
-    <include file="$(find scorecard_submitter/launch/scorecard.launch"/>
+    <include file="$(find scorecard_submitter)/launch/scorecard.launch"/>
   </group>
 
 </launch>
