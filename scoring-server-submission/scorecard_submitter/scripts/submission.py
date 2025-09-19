@@ -35,19 +35,21 @@ def submit_image(image_path, time, id):
 
 
 def convert_to_enum(value):
-    if (value == "absence"):
+    if (value.lower() == "absence"):
         return 0
-    elif (value == "presence"):
+    elif (value.lower() == "presence"):
         return 1
-    elif (value == "wound"):
+    elif (value.lower() == "wound"):
         return 1
-    elif (value == "amputation"):
+    elif (value.lower() == "amputation"):
         return 2
-    elif (value == "open"):
+    elif (value.lower() == "open"):
         return 0
-    elif (value == "closed"):
+    elif (value.lower() == "closed"):
         return 1
-    elif (value == "untestable"):
+    elif (value.lower() == "abnormal"):
+        return 2
+    elif (value.lower() == "untestable"):
         return 3
 
 def start_run():
@@ -84,10 +86,9 @@ def update_casualty(payload):
     #Go through all time_ago fields and update them to be the difference between now and the time in the payload
     current_time = rospy.Time.now().secs
     for key in payload:
-        for subkey in payload[key]:
-            if subkey == "time_ago":
-                if isinstance(payload[key], dict) and "time_ago" in payload[key]:
-                    payload[key]["time_ago"] = current_time - payload[key]["time_ago"]
+      if isinstance(payload[key], dict) and "time_ago" in payload[key].keys():
+        payload[key]["time_ago"] = current_time - payload[key]["time_ago"]
+                
     
     r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
     print(r.status_code, r.json())
@@ -107,31 +108,31 @@ def report_new_casualty(id, lat, long, time):
     payload = {
       "hr": {
         "value": 0,
-        "time_ago": 0,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "rr": {
         "value": 0,
-        "time_ago": 0,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "alertness_ocular": {
         "value": 0,
-        "time_ago": 0,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "alertness_verbal": {
         "value": 0,
-        "time_ago": 0,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "alertness_motor": {
         "value": 0,
-        "time_ago": 0,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "severe_hemorrhage": {
         "value": 0,
-        "time_ago": 0,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "respiratory_distress": {
         "value": 0,
-        "time_ago": 0,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "trauma_head": 0,
       "trauma_torso": 0,
@@ -213,17 +214,11 @@ def parse_report_string(report_str):
                     if key in payload:
                         if key in ["trauma_head", "trauma_torso", "trauma_lower_ext", "trauma_upper_ext"]:
                             payload[key] = convert_to_enum(value)
-                        elif key in ["alertness_ocular", "alertness_verbal", "alertness_motor"]:
-                            payload[key]["value"] = convert_to_enum(value)
-                            payload[key]["time_ago"] = 0
-                        elif key in ["hr", "rr", "temp"]:
-                            payload[key]["value"] = int(value)
+                        elif key in ["alertness_ocular", "alertness_verbal", "alertness_motor", "severe_hemorrhage", "respiratory_distress"] and isinstance(value, dict):
+                            payload[key]["value"] = convert_to_enum(value["value"])
                             payload[key]["time_ago"] = rospy.Time.now().secs
-                        elif key == "severe_hemorrhage":
-                            payload[key]["value"] = convert_to_enum(value)
-                            payload[key]["time_ago"] = rospy.Time.now().secs
-                        elif key == "respiratory_distress":
-                            payload[key]["value"] = convert_to_enum(value)
+                        elif key in ["hr", "rr", "temp"] and isinstance(value, dict):
+                            payload[key]["value"] = float(value["value"])
                             payload[key]["time_ago"] = rospy.Time.now().secs
                         elif key == "location" and isinstance(value, dict):
                             if "latitude" in value and "longitude" in value:

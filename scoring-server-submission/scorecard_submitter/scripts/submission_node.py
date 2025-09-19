@@ -14,7 +14,6 @@ import json
 import utm
 import rospy
 from sensor_msgs.msg import Image, CompressedImage
-from dtc_msgs.msg import CasualtyFix
 from wfov_camera_msgs.msg import WFOVImage
 from helpers import gps_distance
 
@@ -62,11 +61,11 @@ class SubmissionNode:
         start_run()
         #Subscribe to scorecard_topic
         self.deimos_report_sub = rospy.Subscriber("/deimos/report_status", String, self.deimosScoreCallback)
-        self.deimos_image_sub = rospy.Subscriber("/deimos/camera/image", Image, self.deimosImageCallback)
+        self.deimos_image_sub = rospy.Subscriber("/deimos/processed_image", Image, self.deimosImageCallback)
         self.deimos_report_sub = rospy.Subscriber("/phobos/report_status", String, self.phobosScoreCallback)
-        self.deimos_image_sub = rospy.Subscriber("/phobos/camera/image", Image, self.phobosImageCallback)
+        self.deimos_image_sub = rospy.Subscriber("/phobos/process_image", Image, self.phobosImageCallback)
 
-        self.dione_position_sub = rospy.Subscriber("/dione/casualty_info", CasualtyFixArray, self.casualtyPosCallback)
+        self.dione_position_sub = rospy.Subscriber("/casualty_info", CasualtyFixArray, self.casualtyPosCallback)
 
         self.casualty_dict_list = []
         self.most_recent_deimos_image_path = None
@@ -100,9 +99,7 @@ class SubmissionNode:
                             report_new_casualty(new_casualty.id, lat2, lon2, new_casualty.time)
                             break
             
-            db_path = os.path.join(script_dir, "data/casualty_list.json")
-                #self.casualty_dict_list to a json file
-            with open(db_path, "w") as f:
+            with open("/home/dtc/ws/data/casualty_list.json", "w") as f:
                 json.dump(self.casualty_dict_list, f, indent=2)
             print(self.casualty_dict_list)
 
@@ -139,6 +136,12 @@ class SubmissionNode:
         payload["location"]["time_ago"] = self.casualty_dict_list[closest_casualty_idx]["time"]
         self.casualty_dict_list[closest_casualty_idx]["report"] = payload
         update_casualty(payload)  
+        with open("/home/dtc/ws/data/casualty_list.json", "w") as f:
+            json.dump(self.casualty_dict_list, f, indent=2)
+
+        if self.most_recent_deimos_image_path is None:
+            print("[Scorecard][WARNING] No image available to submit.")
+            return
 
         timestamp = int(self.most_recent_deimos_image_path.split("_")[-1].split(".")[0])
         image_id = submit_image(image_path=self.most_recent_deimos_image_path, time=timestamp, id=self.casualty_dict_list[closest_casualty_idx]["id"])
@@ -151,7 +154,7 @@ class SubmissionNode:
         timestamp = int(rospy.Time.now().to_sec())
         image_path = f"/data/deimos_image_{timestamp}.jpg"
         self.most_recent_deimos_image_path = image_path
-        # Save the image to a file
+        # Save the image to a file\
         
         cv2.imwrite(image_path, cv_image)
         print(f"[Scorecard][STATUS] Image saved to {image_path}")
@@ -177,7 +180,12 @@ class SubmissionNode:
         payload["location"]["time_ago"] = self.casualty_dict_list[closest_casualty_idx]["time"]
         self.casualty_dict_list[closest_casualty_idx]["report"] = payload
         update_casualty(payload)  
+        with open("/home/dtc/ws/data/casualty_list.json", "w") as f:
+            json.dump(self.casualty_dict_list, f, indent=2)
 
+        if self.most_recent_deimos_image_path is None:
+            print("[Scorecard][WARNING] No image available to submit.")
+            return
         timestamp = int(self.most_recent_deimos_image_path.split("_")[-1].split(".")[0])
         image_id = submit_image(image_path=self.most_recent_deimos_image_path, time=timestamp, id=self.casualty_dict_list[closest_casualty_idx]["id"])
         print(f"[Scorecard][STATUS] Image submitted with ID: {image_id}")      

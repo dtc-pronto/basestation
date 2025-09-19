@@ -30,7 +30,7 @@ def closest_casualty(report, casualty_list):
     min_distance = float('inf')
     closest_casualty = None
     idx = -1
-    for i in len(casualty_list):
+    for i in range(len(casualty_list)):
         casualty = casualty_list[i]
         if casualty["position"] is not None:
             lat2, lon2 = casualty["position"]
