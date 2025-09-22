@@ -86,10 +86,9 @@ def update_casualty(payload):
     #Go through all time_ago fields and update them to be the difference between now and the time in the payload
     current_time = rospy.Time.now().secs
     for key in payload:
-      if isinstance(payload[key], dict) and "time_ago" in payload[key].keys():
+      if isinstance(payload[key], dict) and "timestamp" in payload[key].keys():
         payload[key]["time_ago"] = current_time - payload[key]["time_ago"]
-                
-    
+                 
     r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
     print(r.status_code, r.json())
 
@@ -216,15 +215,15 @@ def parse_report_string(report_str):
                             payload[key] = convert_to_enum(value)
                         elif key in ["alertness_ocular", "alertness_verbal", "alertness_motor", "severe_hemorrhage", "respiratory_distress"] and isinstance(value, dict):
                             payload[key]["value"] = convert_to_enum(value["value"])
-                            payload[key]["time_ago"] = rospy.Time.now().secs
+                            payload[key]["time_ago"] = float(value[key]["timestamp"])
                         elif key in ["hr", "rr", "temp"] and isinstance(value, dict):
                             payload[key]["value"] = float(value["value"])
-                            payload[key]["time_ago"] = rospy.Time.now().secs
+                            payload[key]["time_ago"] = float(value[key]["timestamp"])
                         elif key == "location" and isinstance(value, dict):
                             if "latitude" in value and "longitude" in value:
                                 payload[key]["latitude"] = float(value["latitude"])
                                 payload[key]["longitude"] = float(value["longitude"])
-                                payload[key]["time_ago"] = rospy.Time.now().secs
+                                payload[key]["time_ago"] = float(value[key]["timestamp"])
                         elif key == "casualty_id":
                             payload[key] = int(value)
                         elif key in ["team", "system"]:

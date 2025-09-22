@@ -25,7 +25,7 @@ def closest_casualty(report, casualty_list):
     latitude = payload["location"]["latitude"]
     longitude = payload["location"]["longitude"]
 
-
+    print(f"Parsed report location: lat={latitude}, lon={longitude}")
 
     min_distance = float('inf')
     closest_casualty = None
@@ -35,6 +35,7 @@ def closest_casualty(report, casualty_list):
         if casualty["position"] is not None:
             lat2, lon2 = casualty["position"]
             distance = gps_distance(latitude, longitude, lat2, lon2)
+            print(distance)
             if distance < min_distance:
                 min_distance = distance
                 closest_casualty = casualty

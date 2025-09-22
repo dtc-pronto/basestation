@@ -1,0 +1,248 @@
+[
+    {
+        "casualty_id": 0,
+        "team": "PennPronto",
+        "system": "JackalNVILA",
+        "location": {
+            "latitude": 39.942397299999996,
+            "longitude": -75.1991105,
+            "time_ago": 1758295955.3458583
+        },
+        "hr": {
+            "value": 55.24530029296875,
+            "time_ago": 1758295955.5273528
+        },
+        "rr": {
+            "value": 11.718700408935547,
+            "time_ago": 1758295955.527357
+        },
+        "alertness_ocular": {
+            "value": "closed",
+            "time_ago": 1758295955.5273614
+        },
+        "alertness_verbal": {
+            "value": "presence",
+            "time_ago": 1758295955.527365
+        },
+        "alertness_motor": {
+            "value": "absence",
+            "time_ago": 1758295955.5273676
+        },
+        "severe_hemorrhage": "absence",
+        "respiratory_distress": 1,
+        "trauma_head": "absence",
+        "trauma_torso": "absence",
+        "trauma_lower_ext": "wound",
+        "trauma_upper_ext": "absence",
+        "temp": {
+            "value": 98,
+            "time_ago": 1758295955.5273705
+        },
+        "description": "The image depicts a person standing on a dirt field with a chain-link fence in the background. The individual is wearing a beige shirt, white shorts, and white sneakers. They are holding a red object in their hands, which appears to be a piece of fabric or cloth. The person's posture suggests they are either examining or handling the red object. The background shows a chain-link fence, some vegetation, and a clear blue sky. The scene appears to be outdoors, possibly in a rural or semi-rural area."
+    },
+    {
+        "casualty_id": 1,
+        "team": "PennPronto",
+        "system": "JackalNVILA",
+        "location": {
+            "latitude": 39.9424363,
+            "longitude": -75.199154,
+            "time_ago": 1758296010.1053207
+        },
+        "hr": {
+            "value": 56.91939926147461,
+            "time_ago": 1758296010.1505666
+        },
+        "rr": {
+            "value": 8.370499610900879,
+            "time_ago": 1758296010.15057
+        },
+        "alertness_ocular": {
+            "value": "closed",
+            "time_ago": 1758296010.1505735
+        },
+        "alertness_verbal": {
+            "value": "presence",
+            "time_ago": 1758296010.1505766
+        },
+        "alertness_motor": {
+            "value": "absence",
+            "time_ago": 1758296010.1505795
+        },
+        "severe_hemorrhage": "absence",
+        "respiratory_distress": 0,
+        "trauma_head": "absence",
+        "trauma_torso": "absence",
+        "trauma_lower_ext": "absence",
+        "trauma_upper_ext": "absence",
+        "temp": {
+            "value": 98,
+            "time_ago": 1758296010.1505826
+        },
+        "description": "The image depicts a person lying on the ground, seemingly unconscious, with their legs crossed and feet up. The individual is wearing a blue shirt, white pants, and yellow boots. The scene is set in a grassy area with a chain-link fence and trees in the background. The person's face is obscured, and their hair is dark. The image has a purple tint, giving it a somewhat surreal appearance."
+    },
+    {
+        "casualty_id": 2,
+        "team": "PennPronto",
+        "system": "JackalNVILA",
+        "location": {
+            "latitude": 39.9424886,
+            "longitude": -75.1992442,
+            "time_ago": 1758296059.8445387
+        },
+        "hr": {
+            "value": 71.98629760742188,
+            "time_ago": 1758296059.8567884
+        },
+        "rr": {
+            "value": 8.370499610900879,
+            "time_ago": 1758296059.8567927
+        },
+        "alertness_ocular": {
+            "value": "closed",
+            "time_ago": 1758296059.8567963
+        },
+        "alertness_verbal": {
+            "value": "presence",
+            "time_ago": 1758296059.8567991
+        },
+        "alertness_motor": {
+            "value": "absence",
+            "time_ago": 1758296059.8568027
+        },
+        "severe_hemorrhage": "absence",
+        "respiratory_distress": 0,
+        "trauma_head": "absence",
+        "trauma_torso": "absence",
+        "trauma_lower_ext": "absence",
+        "trauma_upper_ext": "absence",
+        "temp": {
+            "value": 98,
+            "time_ago": 1758296059.8568068
+        },
+        "description": "The image depicts a scene of a mass casualty incident. In the foreground, there is a young man standing on a grassy area. He is wearing a white t-shirt and dark pants. He appears to be looking at something in the distance. Behind him, there is a chain-link fence, and beyond the fence, there is a yellow school bus parked on a dirt road. The bus is partially obscured by trees. In the background, there is another person standing near the fence, wearing a blue shirt and dark pants. The sky is clear, and the overall atmosphere of the scene is somber."
+    },
+    {
+        "casualty_id": 3,
+        "team": "PennPronto",
+        "system": "JackalNVILA",
+        "location": {
+            "latitude": 39.942445899999996,
+            "longitude": -75.1992104,
+            "time_ago": 1758296119.100694
+        },
+        "hr": {
+            "value": 53.57120132446289,
+            "time_ago": 1758296119.3214114
+        },
+        "rr": {
+            "value": 11.718700408935547,
+            "time_ago": 1758296119.321415
+        },
+        "alertness_ocular": {
+            "value": "closed",
+            "time_ago": 1758296119.321418
+        },
+        "alertness_verbal": {
+            "value": "presence",
+            "time_ago": 1758296119.3214204
+        },
+        "alertness_motor": {
+            "value": "absence",
+            "time_ago": 1758296119.321423
+        },
+        "severe_hemorrhage": "absence",
+        "respiratory_distress": 0,
+        "trauma_head": "absence",
+        "trauma_torso": "absence",
+        "trauma_lower_ext": "absence",
+        "trauma_upper_ext": "absence",
+        "temp": {
+            "value": 98,
+            "time_ago": 1758296119.321426
+        },
+        "description": "The image depicts a scene of a person lying on the ground, seemingly unconscious, with their head resting on a blanket. The individual is wearing a gray shirt and pants, and appears to be in a state of distress. The ground is covered with a tarp, and there are several streetlights visible in the background. The sky is clear, and the surrounding area is lush with greenery, including trees and grass. In the distance, there is a fence and a building, suggesting that this incident is taking place in an urban or suburban setting. The overall atmosphere of the image is somber and somber, reflecting the gravity of the situation."
+    },
+    {
+        "casualty_id": 4,
+        "team": "PennPronto",
+        "system": "JackalNVILA",
+        "location": {
+            "latitude": 39.9424748,
+            "longitude": -75.199299,
+            "time_ago": 1758296161.1075513
+        },
+        "hr": {
+            "value": 56.91939926147461,
+            "time_ago": 1758296161.312953
+        },
+        "rr": {
+            "value": 8.370499610900879,
+            "time_ago": 1758296161.3129573
+        },
+        "alertness_ocular": {
+            "value": "closed",
+            "time_ago": 1758296161.3129616
+        },
+        "alertness_verbal": {
+            "value": "presence",
+            "time_ago": 1758296161.3129656
+        },
+        "alertness_motor": {
+            "value": "absence",
+            "time_ago": 1758296161.3129694
+        },
+        "severe_hemorrhage": "presence",
+        "respiratory_distress": 0,
+        "trauma_head": "absence",
+        "trauma_torso": "absence",
+        "trauma_lower_ext": "absence",
+        "trauma_upper_ext": "absence",
+        "temp": {
+            "value": 98,
+            "time_ago": 1758296161.312974
+        },
+        "description": "The image depicts a scene of a mass casualty incident. A person is lying on the ground, appearing to be unconscious or injured. The individual is lying on a blanket, which is spread out on the ground. The person is wearing a backpack and appears to be wearing a red shirt. The ground is covered in dirt and grass, and there is a chain-link fence in the background. A bus is visible in the background, and there are trees and a clear blue sky above. The scene suggests that the person may have been involved in an accident or a similar incident."
+    },
+    {
+        "casualty_id": 5,
+        "team": "PennPronto",
+        "system": "JackalNVILA",
+        "location": {
+            "latitude": 39.9425218,
+            "longitude": -75.1993256,
+            "time_ago": 1758296205.3406403
+        },
+        "hr": {
+            "value": 56.91939926147461,
+            "time_ago": 1758296205.478574
+        },
+        "rr": {
+            "value": 10.044599533081055,
+            "time_ago": 1758296205.4785783
+        },
+        "alertness_ocular": {
+            "value": "closed",
+            "time_ago": 1758296205.4785829
+        },
+        "alertness_verbal": {
+            "value": "presence",
+            "time_ago": 1758296205.4785864
+        },
+        "alertness_motor": {
+            "value": "absence",
+            "time_ago": 1758296205.4785903
+        },
+        "severe_hemorrhage": "absence",
+        "respiratory_distress": 0,
+        "trauma_head": "absence",
+        "trauma_torso": "absence",
+        "trauma_lower_ext": "absence",
+        "trauma_upper_ext": "wound",
+        "temp": {
+            "value": 98,
+            "time_ago": 1758296205.4785943
+        },
+        "description": "The image depicts a man standing in a grassy area with a chain-link fence in the background. He is wearing a dark blue t-shirt, blue jeans, and black shoes. His arms are crossed, and he appears to be looking down at the ground. The man is surrounded by a dirt mound, and there are small rocks scattered around. In the background, there are trees and a building with a white roof. The sky is clear, and the overall atmosphere is calm."
+    }
+]

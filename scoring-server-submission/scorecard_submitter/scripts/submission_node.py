@@ -36,6 +36,7 @@ from dtc_msgs.msg import ScoreCard, CasualtyFixArray, CasualtyFix
 from sensor_msgs.msg import Image, NavSatFix
 from cv_bridge import CvBridge
 import cv2
+import json
 
 #TODO: Add a hashing dictionary to keep track of victims and corresponding reports
 class Casualty:
@@ -59,6 +60,11 @@ class SubmissionNode:
     def __init__(self):
         print("[Scorecard][STATUS] Submission Node initialized")
         start_run()
+
+        #Configs
+        with open("/home/dtc/ws/data/threshold_config.json", "r") as f:
+            self.config = json.load(f)
+
         #Subscribe to scorecard_topic
         self.deimos_report_sub = rospy.Subscriber("/deimos/report_status", String, self.deimosScoreCallback)
         self.deimos_image_sub = rospy.Subscriber("/deimos/processed_image", Image, self.deimosImageCallback)
@@ -67,13 +73,18 @@ class SubmissionNode:
 
         self.dione_position_sub = rospy.Subscriber("/casualty_info", CasualtyFixArray, self.casualtyPosCallback)
 
+
+        #for testing
+        self.fake_report_sub = rospy.Subscriber("/fake_report", String, self.deimosScoreCallback)
+        self.fake_report_pub = rospy.Publisher("/fake_report", String, queue_size=10)
+
         self.casualty_dict_list = []
         self.most_recent_deimos_image_path = None
         #Add the paths of other robots
     
     def casualtyPosCallback(self, msg):
-        print(len(msg.casualties))
-        print(len(self.casualty_dict_list))
+        #print(len(msg.casualties))
+        #print(len(self.casualty_dict_list))
         if len(msg.casualties) > len(self.casualty_dict_list):
             print("[Scorecard][STATUS] Received new casualty position from /casualty_info")
             for elt in msg.casualties:
@@ -86,22 +97,27 @@ class SubmissionNode:
                     print(f"[Scorecard][STATUS] Casualty ID: {new_casualty.id}, Position:{new_casualty.position}")
                     report_new_casualty(new_casualty.id, location.latitude, location.longitude, new_casualty.time)
                 else:
+                    min_dist = float('inf')
                     for casualty in self.casualty_dict_list:
                         lat1, lon1 = casualty["position"]
                         lat2, lon2 = location.latitude, location.longitude
-                        if gps_distance(lat1, lon1, lat2, lon2) > 0.2:
-                            print("[Scorecard][STATUS] New casualty detected, addding to list")
-                            new_casualty = Casualty(id=len(self.casualty_dict_list), position=(lat2, lon2))
-                            self.casualty_dict_list.append(new_casualty.to_dict())
-                            print(f"[Scorecard][STATUS] Casualty ID: {new_casualty.id}, Position:{new_casualty.position}")
-                            print(f"{elt.time_ago} seconds ago")
-
-                            report_new_casualty(new_casualty.id, lat2, lon2, new_casualty.time)
-                            break
+                        print(f"gps distance: {gps_distance(lat1, lon1, lat2, lon2)} for {casualty['id']}")
+                        if gps_distance(lat1, lon1, lat2, lon2) < min_dist:
+                            min_dist = gps_distance(lat1, lon1, lat2, lon2)
+                    if min_dist < self.config["intra_cluster_distance_threshold"]:
+                        print("[Scorecard][STATUS] Existing casualty detected, not adding to list")
+                    else:
+                        print("[Scorecard][STATUS] New casualty detected, adding to list")
+                        new_casualty = Casualty(id=len(self.casualty_dict_list), position=(lat2, lon2))
+                        self.casualty_dict_list.append(new_casualty.to_dict())
+                        print(f"[Scorecard][STATUS] Casualty ID: {new_casualty.id}, Position:{new_casualty.position}")
+                        print(f"{elt.time_ago} seconds ago")
+                        report_new_casualty(new_casualty.id, lat2, lon2, new_casualty.time)
+                            
             
             with open("/home/dtc/ws/data/casualty_list.json", "w") as f:
                 json.dump(self.casualty_dict_list, f, indent=2)
-            print(self.casualty_dict_list)
+            #print(self.casualty_dict_list)
 
     def deimosImageCallback(self, msg):
         print("[Scorecard][STATUS] Received image from /deimos/camera/image")
@@ -124,13 +140,22 @@ class SubmissionNode:
         report_str = msg.data
         print(report_str)
 
-        _, _, closest_casualty_idx, payload = closest_casualty(report_str, self.casualty_dict_list)
+        _, min_dist, closest_casualty_idx, payload = closest_casualty(report_str, self.casualty_dict_list)
         
-        if closest_casualty_idx == -1:
-            print("[Scorecard][WARNING] No casualties available to assign report to.")
-            return
-        
-        print(f"[Scorecard][STATUS] Closest casualty index: {closest_casualty_idx}")
+        if closest_casualty_idx == -1 or min_dist > self.config["ugv_uav_distance_threshold"]:
+            #purely for debug log
+            if closest_casualty_idx == -1:
+                print("[Scorecard][WARNING] No casualties available to assign report to.")
+            elif min_dist > self.config["ugv_uav_distance_threshold"]:
+                print(f"[Scorecard][WARNING] No casualties within threshold distance. Closest distance: {min_dist} meters. Must have found a casualty that the dronew hadn't found.")
+            
+            lat, lon = payload["location"]["latitude"], payload["location"]["longitude"]
+            new_casualty = Casualty(id=len(self.casualty_dict_list), position=(lat, lon))
+            self.casualty_dict_list.append(new_casualty.to_dict())
+            closest_casualty_idx = len(self.casualty_dict_list) - 1
+            report_new_casualty(id=len(self.casualty_dict_list), position=(payload["location"]["latitude"], payload["location"]["longitude"])) 
+        else:
+            print(f"[Scorecard][STATUS] Closest casualty index: {closest_casualty_idx}")
         payload["casualty_id"] = self.casualty_dict_list[closest_casualty_idx]["id"]
         payload["location"]["longitude"], payload["location"]["latitude"] = self.casualty_dict_list[closest_casualty_idx]["position"]
         payload["location"]["time_ago"] = self.casualty_dict_list[closest_casualty_idx]["time"]
@@ -161,36 +186,21 @@ class SubmissionNode:
         
 
     def phobosScoreCallback(self, msg):
-        print("[Scorecard][STATUS] Received report from /phobos/report_status")
-        print("[Scorecard][STATUS] Publishing report status")
-
-        #extract the string from the message
-        report_str = msg.data
-        print(report_str)
-
-        _, _, closest_casualty_idx, payload = closest_casualty(report_str, self.casualty_dict_list)
-        
-        if closest_casualty_idx == -1:
-            print("[Scorecard][WARNING] No casualties available to assign report to.")
-            return
-        
-        print(f"[Scorecard][STATUS] Closest casualty index: {closest_casualty_idx}")
-        payload["casualty_id"] = self.casualty_dict_list[closest_casualty_idx]["id"]
-        payload["location"]["longitude"], payload["location"]["latitude"] = self.casualty_dict_list[closest_casualty_idx]["position"]
-        payload["location"]["time_ago"] = self.casualty_dict_list[closest_casualty_idx]["time"]
-        self.casualty_dict_list[closest_casualty_idx]["report"] = payload
-        update_casualty(payload)  
-        with open("/home/dtc/ws/data/casualty_list.json", "w") as f:
-            json.dump(self.casualty_dict_list, f, indent=2)
-
-        if self.most_recent_deimos_image_path is None:
-            print("[Scorecard][WARNING] No image available to submit.")
-            return
-        timestamp = int(self.most_recent_deimos_image_path.split("_")[-1].split(".")[0])
-        image_id = submit_image(image_path=self.most_recent_deimos_image_path, time=timestamp, id=self.casualty_dict_list[closest_casualty_idx]["id"])
-        print(f"[Scorecard][STATUS] Image submitted with ID: {image_id}")      
+        pass
 
 if __name__ == "__main__":
     rospy.init_node("scorecard_submitter")
-    SubmissionNode()
+    SubmissionNode()    
+    #wait 15 seconds then publish to fake_report for testing
+    print('reading reports from file')
+    with open("/home/dtc/ws/src/scorecard_submitter/scripts/data", "r") as f:
+        reports = json.load(f)
+    
+    print('waiting 30 seconds to publish fake report')
+    time.sleep(30)
+    pub = rospy.Publisher("/fake_report", String, queue_size=10)
+    pub.publish(String(data=reports[0])) 
+
     rospy.spin()
+
+    
