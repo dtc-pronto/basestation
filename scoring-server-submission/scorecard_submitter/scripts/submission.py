@@ -86,11 +86,90 @@ def update_casualty(payload):
     #Go through all time_ago fields and update them to be the difference between now and the time in the payload
     current_time = rospy.Time.now().secs
     for key in payload:
-      if isinstance(payload[key], dict) and "timestamp" in payload[key].keys():
+      if isinstance(payload[key], dict) and "time_ago" in payload[key].keys():
         payload[key]["time_ago"] = current_time - payload[key]["time_ago"]
                  
     r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
     print(r.status_code, r.json())
+
+def update_position(payload, lat, lon, time):
+    load_dotenv()
+    print("Updating scorecard...")
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+    
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
+
+    if payload == {}:
+      payload = {
+        "hr": {
+          "value": 0,
+          "time_ago": rospy.Time.now().secs - time,
+        },
+        "rr": {
+          "value": 0,
+          "time_ago": rospy.Time.now().secs - time,
+        },
+        "alertness_ocular": {
+          "value": 0,
+          "time_ago": rospy.Time.now().secs - time,
+        },
+        "alertness_verbal": {
+          "value": 0,
+          "time_ago": rospy.Time.now().secs - time,
+        },
+        "alertness_motor": {
+          "value": 0,
+          "time_ago": rospy.Time.now().secs - time,
+        },
+        "severe_hemorrhage": {
+          "value": 0,
+          "time_ago": rospy.Time.now().secs - time,
+        },
+        "respiratory_distress": {
+          "value": 0,
+          "time_ago": rospy.Time.now().secs - time,
+        },
+        "trauma_head": 0,
+        "trauma_torso": 0,
+        "trauma_lower_ext": 0,
+        "trauma_upper_ext": 0,
+        "temp": {
+          "value": 98,
+          "time_ago": rospy.Time.now().secs - time,
+        },
+        "casualty_id": id,
+        "team": "Penn",
+        "system": "PennPRONTO",
+        "location": {
+          "latitude": lat,
+          "longitude": lon,
+          "time_ago": rospy.Time.now().secs - time,
+        }
+      }
+    else:
+      payload["location"]["latitude"] = lat
+      payload["location"]["longitude"] = lon
+      payload["location"]["time_ago"] = time
+
+      current_time = rospy.Time.now().secs
+      for key in payload:
+        if isinstance(payload[key], dict) and "time_ago" in payload[key].keys():
+          payload[key]["time_ago"] = current_time - payload[key]["time_ago"]
+
+      #Go through all time_ago fields and update them to be the difference between now and the time in the payload
+      current_time = rospy.Time.now().secs
+      for key in payload:
+        if isinstance(payload[key], dict) and "timestamp" in payload[key].keys():
+          payload[key]["time_ago"] = current_time - payload[key]["timestamp"]
+
+    r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
+    print(r.status_code, r.json())
+
 
 def report_new_casualty(id, lat, long, time):
     load_dotenv()

@@ -28,8 +28,8 @@ from helpers import gps_distance
 """
 
 import rospy
-from submission import start_run, submit_image, report_new_casualty, update_casualty
-from helpers import gps_distance, closest_casualty
+from submission import start_run, submit_image, report_new_casualty, update_casualty, update_position
+from helpers import gps_distance, closest_casualty, update_drone_casualty_db, update_jackal_casualty_db, parse_report_string
 
 from std_msgs.msg import Bool, String, UInt8, Float32
 from dtc_msgs.msg import ScoreCard, CasualtyFixArray, CasualtyFix
@@ -37,6 +37,20 @@ from sensor_msgs.msg import Image, NavSatFix
 from cv_bridge import CvBridge
 import cv2
 import json
+
+jackal_db_entry = {
+    "id": None,
+    "lat": None,
+    "lon": None,
+    "report": {},
+    "image_path": None
+}
+
+drone_db_entry = {
+    "id": None,
+    "lat": None,
+    "lon": None
+}
 
 #TODO: Add a hashing dictionary to keep track of victims and corresponding reports
 class Casualty:
@@ -65,6 +79,10 @@ class SubmissionNode:
         with open("/home/dtc/ws/data/threshold_config.json", "r") as f:
             self.config = json.load(f)
 
+        self.drone_db = "/home/dtc/ws/data/casualty_db/uav_casualty_list.json"
+        self.jackal_db = "/home/dtc/ws/data/casualty_db/ugv_casualty_list.json"
+        self.matching_table = "/home/dtc/ws/data/casualty_db/matching_table.json"
+
         #Subscribe to scorecard_topic
         self.deimos_report_sub = rospy.Subscriber("/deimos/report_status", String, self.deimosScoreCallback)
         self.deimos_image_sub = rospy.Subscriber("/deimos/processed_image", Image, self.deimosImageCallback)
@@ -73,51 +91,42 @@ class SubmissionNode:
 
         self.dione_position_sub = rospy.Subscriber("/casualty_info", CasualtyFixArray, self.casualtyPosCallback)
 
-
-        #for testing
-        self.fake_report_sub = rospy.Subscriber("/fake_report", String, self.deimosScoreCallback)
-        self.fake_report_pub = rospy.Publisher("/fake_report", String, queue_size=10)
-
-        self.casualty_dict_list = []
+        self.drone_casualty_dict_list = []
+        self.jackal_casualty_dict_list = []
         self.most_recent_deimos_image_path = None
         #Add the paths of other robots
     
     def casualtyPosCallback(self, msg):
         #print(len(msg.casualties))
         #print(len(self.casualty_dict_list))
-        if len(msg.casualties) > len(self.casualty_dict_list):
-            print("[Scorecard][STATUS] Received new casualty position from /casualty_info")
-            for elt in msg.casualties:
-                location = elt.location
-                print(location)
-                if len(self.casualty_dict_list) == 0:
-                    print("[Scorecard][STATUS] First casualty detected, adding to list")
-                    new_casualty = Casualty(id=len(self.casualty_dict_list), position=(location.latitude, location.longitude))
-                    self.casualty_dict_list.append(new_casualty.to_dict())
-                    print(f"[Scorecard][STATUS] Casualty ID: {new_casualty.id}, Position:{new_casualty.position}")
-                    report_new_casualty(new_casualty.id, location.latitude, location.longitude, new_casualty.time)
-                else:
-                    min_dist = float('inf')
-                    for casualty in self.casualty_dict_list:
-                        lat1, lon1 = casualty["position"]
-                        lat2, lon2 = location.latitude, location.longitude
-                        print(f"gps distance: {gps_distance(lat1, lon1, lat2, lon2)} for {casualty['id']}")
-                        if gps_distance(lat1, lon1, lat2, lon2) < min_dist:
-                            min_dist = gps_distance(lat1, lon1, lat2, lon2)
-                    if min_dist < self.config["intra_cluster_distance_threshold"]:
-                        print("[Scorecard][STATUS] Existing casualty detected, not adding to list")
-                    else:
-                        print("[Scorecard][STATUS] New casualty detected, adding to list")
-                        new_casualty = Casualty(id=len(self.casualty_dict_list), position=(lat2, lon2))
-                        self.casualty_dict_list.append(new_casualty.to_dict())
-                        print(f"[Scorecard][STATUS] Casualty ID: {new_casualty.id}, Position:{new_casualty.position}")
-                        print(f"{elt.time_ago} seconds ago")
-                        report_new_casualty(new_casualty.id, lat2, lon2, new_casualty.time)
-                            
-            
-            with open("/home/dtc/ws/data/casualty_list.json", "w") as f:
-                json.dump(self.casualty_dict_list, f, indent=2)
-            #print(self.casualty_dict_list)
+        self.drone_casualty_dict_list = []
+
+        for elt in msg.casualties:
+            new_casualty = drone_db_entry.copy()
+            new_casualty["id"] = elt.id
+            new_casualty["lat"] = elt.position.latitude
+            new_casualty["lon"] = elt.position.longitude
+            self.drone_casualty_dict_list.append(new_casualty)
+
+        with open(self.drone_db, "w") as f:
+            json.dump(self.drone_casualty_dict_list, f, indent=2)
+        
+        update_drone_casualty_db(self.config["ugv_uav_distance_threshold"])
+
+        with open(self.matching_table, "r") as f:
+            matching_table = json.load(f)
+        
+        for elt in matching_table:
+            if elt["action"] == "init":
+                report_new_casualty(id=elt["casualty_id"], position=(elt["uav"]["lat"], elt["uav"]["lon"]), time=elt["timestamp"])
+                elt["action"] = ""
+            elif elt["action"] == "update_pos":
+                if elt["report"] != {}: #ideally i think this should never get hit
+                    elt["report"]["location"]["time_ago"] = elt["timestamp"]
+                update_position(elt["report"], elt["uav"]["lat"], elt["uav"]["lon"], time=elt["timestamp"])
+                elt["action"] = ""                
+        with open(self.matching_table, "w") as f:
+            json.dump(matching_table, f, indent=2)
 
     def deimosImageCallback(self, msg):
         print("[Scorecard][STATUS] Received image from /deimos/camera/image")
@@ -126,11 +135,10 @@ class SubmissionNode:
         timestamp = int(rospy.Time.now().to_sec())
         image_path = f"/data/deimos_image_{timestamp}.jpg"
         self.most_recent_deimos_image_path = image_path
-        # Save the image to a file
         
+        # Save the image to a file
         cv2.imwrite(image_path, cv_image)
         print(f"[Scorecard][STATUS] Image saved to {image_path}")
-        
 
     def deimosScoreCallback(self, msg):
         print("[Scorecard][STATUS] Received report from /deimos/report_status")
@@ -139,38 +147,37 @@ class SubmissionNode:
         #extract the string from the message
         report_str = msg.data
         print(report_str)
+        report = parse_report_string(report_str)
+        new_jackal_entry = jackal_db_entry.copy()
+        new_jackal_entry["id"] = len(self.jackal_casualty_dict_list)
+        new_jackal_entry["lat"] = report["location"]["latitude"]
+        new_jackal_entry["lon"] = report["location"]["longitude"]
+        new_jackal_entry["report"] = report
+        new_jackal_entry["image_path"] = self.most_recent_deimos_image_path
 
-        _, min_dist, closest_casualty_idx, payload = closest_casualty(report_str, self.casualty_dict_list)
+        self.jackal_casualty_dict_list.append(new_jackal_entry)
+
+        with open(self.jackal_db, "w") as f:
+            json.dump(self.jackal_casualty_dict_list, f, indent=2)
         
-        if closest_casualty_idx == -1 or min_dist > self.config["ugv_uav_distance_threshold"]:
-            #purely for debug log
-            if closest_casualty_idx == -1:
-                print("[Scorecard][WARNING] No casualties available to assign report to.")
-            elif min_dist > self.config["ugv_uav_distance_threshold"]:
-                print(f"[Scorecard][WARNING] No casualties within threshold distance. Closest distance: {min_dist} meters. Must have found a casualty that the dronew hadn't found.")
-            
-            lat, lon = payload["location"]["latitude"], payload["location"]["longitude"]
-            new_casualty = Casualty(id=len(self.casualty_dict_list), position=(lat, lon))
-            self.casualty_dict_list.append(new_casualty.to_dict())
-            closest_casualty_idx = len(self.casualty_dict_list) - 1
-            report_new_casualty(id=len(self.casualty_dict_list), position=(payload["location"]["latitude"], payload["location"]["longitude"])) 
-        else:
-            print(f"[Scorecard][STATUS] Closest casualty index: {closest_casualty_idx}")
-        payload["casualty_id"] = self.casualty_dict_list[closest_casualty_idx]["id"]
-        payload["location"]["longitude"], payload["location"]["latitude"] = self.casualty_dict_list[closest_casualty_idx]["position"]
-        payload["location"]["time_ago"] = self.casualty_dict_list[closest_casualty_idx]["time"]
-        self.casualty_dict_list[closest_casualty_idx]["report"] = payload
-        update_casualty(payload)  
-        with open("/home/dtc/ws/data/casualty_list.json", "w") as f:
-            json.dump(self.casualty_dict_list, f, indent=2)
+        update_jackal_casualty_db(self.config["ugv_uav_distance_threshold"])
 
-        if self.most_recent_deimos_image_path is None:
-            print("[Scorecard][WARNING] No image available to submit.")
-            return
+        with open(self.matching_table, "r") as f:
+            matching_table = json.load(f)
 
-        timestamp = int(self.most_recent_deimos_image_path.split("_")[-1].split(".")[0])
-        image_id = submit_image(image_path=self.most_recent_deimos_image_path, time=timestamp, id=self.casualty_dict_list[closest_casualty_idx]["id"])
-        print(f"[Scorecard][STATUS] Image submitted with ID: {image_id}")      
+        for elt in matching_table:
+            if elt["action"] == "init_update":
+                report_new_casualty(id=elt["casualty_id"], position=(elt["ugv"]["lat"], elt["ugv"]["lon"]), time=elt["timestamp"])
+                elt["report"]["id"] = elt["casualty_id"]
+                update_casualty(elt["report"])
+                elt["action"] = ""
+            elif elt["action"] == "update":
+                elt["report"]["id"] = elt["casualty_id"]
+                update_casualty(elt["report"])
+                elt["action"] = ""                
+        with open(self.matching_table, "w") as f:
+            json.dump(matching_table, f, indent=2)
+
         
     def phobosImageCallback(self, msg):
         print("[Scorecard][STATUS] Received image from /phobos/camera/image")
@@ -191,16 +198,6 @@ class SubmissionNode:
 if __name__ == "__main__":
     rospy.init_node("scorecard_submitter")
     SubmissionNode()    
-    #wait 15 seconds then publish to fake_report for testing
-    print('reading reports from file')
-    with open("/home/dtc/ws/src/scorecard_submitter/scripts/data", "r") as f:
-        reports = json.load(f)
-    
-    print('waiting 30 seconds to publish fake report')
-    time.sleep(30)
-    pub = rospy.Publisher("/fake_report", String, queue_size=10)
-    pub.publish(String(data=reports[0])) 
-
     rospy.spin()
 
     

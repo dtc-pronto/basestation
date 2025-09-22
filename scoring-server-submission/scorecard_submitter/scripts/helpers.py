@@ -1,6 +1,30 @@
+import json
 import math
 import utm
 from submission import parse_report_string
+import rospy
+
+#make a struct for matching table entry
+matching_entry = {
+    "casualty_id": None,
+    "uav": {
+        "id": None,
+        "lat": None,
+        "lon": None
+    },
+    "ugv": {
+        "id": None,
+        "lat": None,
+        "lon": None
+    },
+    "matched": False,
+    "action": "",
+    "report": {},
+    "image_path": None,
+    "timestamp": None
+}
+
+
 
 def gps_distance(lat1, lon1, lat2, lon2):
     """
@@ -42,3 +66,105 @@ def closest_casualty(report, casualty_list):
                 idx = i
                 
     return closest_casualty, min_distance, idx, payload
+
+def update_drone_casualty_db(threshold=7):
+    with open("/data/casualty_db/uav_casualty_list.json", "r") as f:
+        uav_db = json.load(f)
+
+    with open("/data/casualty_db/matching_table.json", "r") as f:
+        matching_table = json.load(f)
+
+    #first see this is a casualty the drone has seen before, but not the jackal
+    for drone_det in uav_db:
+        for entry in matching_table:
+            if entry["uav"]["id"] == drone_det["id"] and entry["ugv"]["id"] == None:
+                entry["uav"]["lat"], entry["uav"]["lon"] = drone_det["lat"], drone_det["lon"]
+                entry["action"] = "update_pos"
+                entry["timestamp"] = rospy.Time.now().to_sec()
+    
+    #For each drone 
+    for drone_det in uav_db:
+        min_dist = float('inf')
+        closest_idx = -1
+        #Compare to each entry in the matching table
+        for entry in matching_table:
+            if entry["ugv"]["id"] != None:
+                lat = entry["ugv"]["lat"]
+                lon = entry["ugv"]["lon"]
+                distance = gps_distance(lat, lon, drone_det["lat"], drone_det["lon"])
+                if distance < min_dist:
+                    min_dist = distance
+                    closest_idx = entry["casualty_id"]
+        #then check if the jackal has seen this casualty before
+        if min_dist < threshold and closest_idx != -1: #this means another jackal found this first
+            matching_table[closest_idx]["uav"]["id"] = drone_det["id"]
+            matching_table[closest_idx]["uav"]["lat"], matching_table[closest_idx]["uav"]["lon"] = drone_det["lat"], drone_det["lon"]
+            matching_table[closest_idx]["action"] = "" #we don't do anything since the jackal found it first
+            matching_table[closest_idx]["timestamp"] = rospy.Time.now().to_sec()
+        #or else this is a new casualty for the drone
+        else:
+            new_entry = matching_entry.copy()
+            new_entry["uav"]["id"] = drone_det["id"]
+            new_entry["uav"]["lat"], new_entry["uav"]["lon"] = drone_det["lat"], drone_det["lon"]
+            new_entry["casualty_id"] = len(matching_table)
+            new_entry["action"] = "init"
+            new_entry["timestamp"] = rospy.Time.now().to_sec()
+            matching_table.append(new_entry)   
+
+def update_jackal_casualty_db(threshold=7):
+    with open("/data/casualty_db/ugv_casualty_list.json", "r") as f:
+        ugv_db = json.load(f)
+    with open("/data/casualty_db/matching_table.json", "r") as f:
+        matching_table = json.load(f)
+
+    latest_casualty = ugv_db[-1]
+    min_dist = float('inf')
+    closest_idx = -1
+    #First check if another Jackal has found this casualty
+    for i in range(len(matching_table)):
+        entry = matching_table[i]
+        if entry["ugv"]["id"] != None:
+            lat = entry["ugv"]["lat"]
+            lon = entry["ugv"]["lon"]
+            distance = gps_distance(lat, lon, latest_casualty["position"][0], latest_casualty["position"][1])
+            if distance < min_dist:
+                min_dist = distance
+                closest_idx = i
+    if min_dist < threshold and closest_idx != -1: #this means another jackal found this first
+        matching_table[closest_idx]["report"] = latest_casualty["report"]
+        matching_table[closest_idx]["image_path"] = latest_casualty["image_path"]
+        matching_table[closest_idx]["action"] = "update"
+        matching_table[closest_idx]["timestamp"] = rospy.Time.now().to_sec()
+    
+    #Now check if the drone has found this casualty
+    min_dist = float('inf')
+    closest_idx = -1
+    #First check if another Jackal has found this casualty
+    for i in range(len(matching_table)):
+        entry = matching_table[i]
+        if entry["uav"]["id"] != None:
+            lon = entry["uav"]["lon"]
+            lat = entry["uav"]["lat"]
+            distance = gps_distance(lat, lon, latest_casualty["position"][0], latest_casualty["position"][1])
+            if distance < min_dist:
+                min_dist = distance
+                closest_idx = i
+    if min_dist < threshold and closest_idx != -1: #this means another jackal found this first
+        matching_table[closest_idx]["ugv"]["id"] = latest_casualty["id"]
+        matching_table[closest_idx]["ugv"]["lat"], matching_table[closest_idx]["ugv"]["lon"] = latest_casualty["lat"], latest_casualty["lon"]
+        matching_table[closest_idx]["report"] = latest_casualty["report"]
+        matching_table[closest_idx]["image_path"] = latest_casualty["image_path"]
+        matching_table[closest_idx]["action"] = "update"
+        matching_table[closest_idx]["timestamp"] = rospy.Time.now().to_sec()
+    else: #this means jackal found this before a drone did
+        new_entry = matching_entry.copy()
+        new_entry["ugv"]["id"] = latest_casualty["id"]
+        new_entry["ugv"]["lat"], new_entry["ugv"]["lon"] = latest_casualty["lat"], latest_casualty["lon"]
+        new_entry["report"] = latest_casualty["report"]
+        new_entry["image_path"] = latest_casualty["image_path"]
+        new_entry["action"] = "init"
+        new_entry["casualty_id"] = len(matching_table)
+        new_entry["timestamp"] = rospy.Time.now().to_sec()
+        matching_table.append(new_entry)
+
+    
