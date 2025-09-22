@@ -170,7 +170,6 @@ def update_position(payload, lat, lon, time):
     r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
     print(r.status_code, r.json())
 
-
 def report_new_casualty(id, lat, long, time):
     load_dotenv()
     print("new casualty...")
