@@ -147,10 +147,14 @@ def update_jackal_casualty_db(ugv_uav_threshold=7,ugv_ugv_threshold=2):
                 min_dist = distance
                 closest_idx = i
     if min_dist < ugv_ugv_threshold: #this means another jackal found this first
+        print("UPDATE request ran")
         matching_table[closest_idx]["report"] = latest_casualty["report"]
         matching_table[closest_idx]["image_path"] = latest_casualty["image_path"]
         matching_table[closest_idx]["action"] = "update"
         matching_table[closest_idx]["timestamp"] = rospy.Time.now().to_sec()
+
+        with open("/home/dtc/ws/data/casualty_db/matching_table.json", "w") as f:
+            json.dump(matching_table, f, indent=2)
         return
     
     #Now check if the drone has found this casualty

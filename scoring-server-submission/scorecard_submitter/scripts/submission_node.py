@@ -98,7 +98,7 @@ class SubmissionNode:
         self.deimos_report_sub = rospy.Subscriber("/phobos/report_status", String, self.phobosScoreCallback)
         self.deimos_image_sub = rospy.Subscriber("/phobos/process_image", Image, self.phobosImageCallback)
 
-        self.dione_position_sub = rospy.Subscriber("/casualty_info", CasualtyFixArray, self.casualtyPosCallback)
+        self.dione_position_sub = rospy.Subscriber("dione/casualty_info", CasualtyFixArray, self.casualtyPosCallback)
 
         self.drone_casualty_dict_list = []
         self.jackal_casualty_dict_list = []
@@ -140,7 +140,7 @@ class SubmissionNode:
         bridge = CvBridge()
         cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
         timestamp = int(rospy.Time.now().to_sec())
-        image_path = f"/data/deimos_image_{timestamp}.jpg"
+        image_path = f"/home/dtc/ws/data/casualty_images/deimos_image_{timestamp}.jpg"
         self.most_recent_deimos_image_path = image_path
         
         # Save the image to a file
@@ -185,6 +185,7 @@ class SubmissionNode:
                 elt["pos_sent"] = True
                 elt["init_supp_sent"] = True
             elif elt["action"] == "update" and elt["init_supp_sent"]:
+                print("Should be updating")
                 if elt["update_sent"]:
                     print("[Scorecard][STATUS] Two Jackals have already triaged this. Update already sent for casualty_id ", elt["casualty_id"])
                 else:
