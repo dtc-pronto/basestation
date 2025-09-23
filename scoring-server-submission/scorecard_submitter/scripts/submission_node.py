@@ -83,8 +83,16 @@ class SubmissionNode:
         self.jackal_db = "/home/dtc/ws/data/casualty_db/ugv_casualty_list.json"
         self.matching_table = "/home/dtc/ws/data/casualty_db/matching_table.json"
 
+        #write empty json files to start
+        with open(self.drone_db, "w") as f:
+            json.dump([], f)
+        with open(self.jackal_db, "w") as f:
+            json.dump([], f)
+        with open(self.matching_table, "w") as f:
+            json.dump([], f)
+
         #Subscribe to scorecard_topic
-        self.deimos_report_sub = rospy.Subscriber("/deimos/report_status", String, self.deimosScoreCallback)
+        self.deimos_report_sub = rospy.Subscriber("/deimos/report_status", String, self.deimosScoreCallback) #changed atm
         self.deimos_image_sub = rospy.Subscriber("/deimos/processed_image", Image, self.deimosImageCallback)
         self.deimos_report_sub = rospy.Subscriber("/phobos/report_status", String, self.phobosScoreCallback)
         self.deimos_image_sub = rospy.Subscriber("/phobos/process_image", Image, self.phobosImageCallback)
@@ -103,9 +111,9 @@ class SubmissionNode:
 
         for elt in msg.casualties:
             new_casualty = drone_db_entry.copy()
-            new_casualty["id"] = elt.id
-            new_casualty["lat"] = elt.position.latitude
-            new_casualty["lon"] = elt.position.longitude
+            new_casualty["id"] = elt.casualty_id
+            new_casualty["lat"] = elt.location.latitude
+            new_casualty["lon"] = elt.location.longitude
             self.drone_casualty_dict_list.append(new_casualty)
 
         with open(self.drone_db, "w") as f:
@@ -118,12 +126,13 @@ class SubmissionNode:
         
         for elt in matching_table:
             if elt["action"] == "init":
-                report_new_casualty(id=elt["casualty_id"], position=(elt["uav"]["lat"], elt["uav"]["lon"]), time=elt["timestamp"])
+                report_new_casualty(id=elt["casualty_id"], lat=elt["uav"]["lat"], long=elt["uav"]["lon"], time=elt["timestamp"])
                 elt["action"] = ""
+                exit(1)
             elif elt["action"] == "update_pos":
                 if elt["report"] != {}: #ideally i think this should never get hit
                     elt["report"]["location"]["time_ago"] = elt["timestamp"]
-                update_position(elt["report"], elt["uav"]["lat"], elt["uav"]["lon"], time=elt["timestamp"])
+                update_position(elt["casualty_id"], elt["report"], elt["uav"]["lat"], elt["uav"]["lon"], time=elt["timestamp"])
                 elt["action"] = ""                
         with open(self.matching_table, "w") as f:
             json.dump(matching_table, f, indent=2)
@@ -167,13 +176,12 @@ class SubmissionNode:
 
         for elt in matching_table:
             if elt["action"] == "init_update":
-                report_new_casualty(id=elt["casualty_id"], position=(elt["ugv"]["lat"], elt["ugv"]["lon"]), time=elt["timestamp"])
+                report_new_casualty(id=elt["casualty_id"], lat=elt["ugv"]["lat"], long=elt["ugv"]["lon"], time=elt["timestamp"])
                 elt["report"]["id"] = elt["casualty_id"]
-                update_casualty(elt["report"])
+                update_casualty(elt["casualty_id"], elt["report"])
                 elt["action"] = ""
             elif elt["action"] == "update":
-                elt["report"]["id"] = elt["casualty_id"]
-                update_casualty(elt["report"])
+                update_casualty(elt["casualty_id"],elt["report"])
                 elt["action"] = ""                
         with open(self.matching_table, "w") as f:
             json.dump(matching_table, f, indent=2)
