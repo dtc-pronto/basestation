@@ -1,0 +1,601 @@
+[
+  {
+    "report_id": null,
+    "casualty_id": 0,
+    "uav": {
+      "id": 0,
+      "lat": 39.942246791528405,
+      "lon": -75.1992542207489
+    },
+    "ugv": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "matched": false,
+    "action": "",
+    "report": {},
+    "image_path": null,
+    "timestamp": 1758642485.7851386,
+    "pos_sent": true,
+    "init_supp_sent": false,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 1,
+    "uav": {
+      "id": 1,
+      "lat": 39.94223548826972,
+      "lon": -75.19919616055584
+    },
+    "ugv": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "matched": false,
+    "action": "",
+    "report": {},
+    "image_path": null,
+    "timestamp": 1758642485.7851493,
+    "pos_sent": true,
+    "init_supp_sent": false,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 2,
+    "uav": {
+      "id": 7,
+      "lat": 39.9422490194264,
+      "lon": -75.19928240368134
+    },
+    "ugv": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "matched": false,
+    "action": "",
+    "report": {},
+    "image_path": null,
+    "timestamp": 1758642485.7851634,
+    "pos_sent": true,
+    "init_supp_sent": false,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 3,
+    "uav": {
+      "id": 3,
+      "lat": 39.94235124288786,
+      "lon": -75.19914697224823
+    },
+    "ugv": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "matched": false,
+    "action": "",
+    "report": {},
+    "image_path": null,
+    "timestamp": 1758642485.785157,
+    "pos_sent": true,
+    "init_supp_sent": false,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 4,
+    "uav": {
+      "id": 11,
+      "lat": 39.9424404829899,
+      "lon": -75.19931638648826
+    },
+    "ugv": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "matched": false,
+    "action": "",
+    "report": {},
+    "image_path": null,
+    "timestamp": 1758642485.7852025,
+    "pos_sent": true,
+    "init_supp_sent": false,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 5,
+    "uav": {
+      "id": 12,
+      "lat": 39.94251304095839,
+      "lon": -75.19937407751043
+    },
+    "ugv": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "matched": false,
+    "action": "",
+    "report": {},
+    "image_path": null,
+    "timestamp": 1758642485.7852256,
+    "pos_sent": true,
+    "init_supp_sent": false,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 6,
+    "uav": {
+      "id": 13,
+      "lat": 39.94246042669415,
+      "lon": -75.19932350694211
+    },
+    "ugv": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "matched": false,
+    "action": "",
+    "report": {},
+    "image_path": null,
+    "timestamp": 1758642485.785252,
+    "pos_sent": true,
+    "init_supp_sent": false,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 7,
+    "uav": {
+      "id": 15,
+      "lat": 39.94241752176887,
+      "lon": -75.19920991357753
+    },
+    "ugv": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "matched": false,
+    "action": "",
+    "report": {},
+    "image_path": null,
+    "timestamp": 1758642485.7852688,
+    "pos_sent": true,
+    "init_supp_sent": false,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 8,
+    "uav": {
+      "id": 16,
+      "lat": 39.94236829502688,
+      "lon": -75.19915214569166
+    },
+    "ugv": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "matched": false,
+    "action": "",
+    "report": {},
+    "image_path": null,
+    "timestamp": 1758642485.7852752,
+    "pos_sent": true,
+    "init_supp_sent": false,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 9,
+    "uav": {
+      "id": 22,
+      "lat": 39.94253273145193,
+      "lon": -75.19937417034058
+    },
+    "ugv": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "matched": false,
+    "action": "",
+    "report": {},
+    "image_path": null,
+    "timestamp": 1758642485.7852945,
+    "pos_sent": true,
+    "init_supp_sent": false,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 10,
+    "uav": {
+      "id": 21,
+      "lat": 39.942503304515945,
+      "lon": -75.19928491137249
+    },
+    "ugv": {
+      "id": 5,
+      "lat": 39.9425218,
+      "lon": -75.1993256
+    },
+    "matched": false,
+    "action": "",
+    "report": {
+      "hr": {
+        "value": 0,
+        "time_ago": 1758642553
+      },
+      "rr": {
+        "value": 0,
+        "time_ago": 1758642553
+      },
+      "alertness_ocular": {
+        "value": 0,
+        "time_ago": 1758642553
+      },
+      "alertness_verbal": {
+        "value": 0,
+        "time_ago": 1758642553
+      },
+      "alertness_motor": {
+        "value": 0,
+        "time_ago": 1758642553
+      },
+      "severe_hemorrhage": {
+        "value": 0,
+        "time_ago": 1758642553
+      },
+      "respiratory_distress": {
+        "value": 0,
+        "time_ago": 1758642553
+      },
+      "trauma_head": 0,
+      "trauma_torso": 0,
+      "trauma_lower_ext": 0,
+      "trauma_upper_ext": 0,
+      "temp": {
+        "value": 98,
+        "time_ago": 1758642553
+      },
+      "casualty_id": 10,
+      "team": "PennPronto",
+      "system": "JackalNVILA",
+      "location": {
+        "latitude": 39.9425218,
+        "longitude": -75.1993256,
+        "time_ago": 1758642553
+      }
+    },
+    "image_path": null,
+    "timestamp": 1758642553.1323133,
+    "pos_sent": true,
+    "init_supp_sent": true,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 11,
+    "uav": {
+      "id": 14,
+      "lat": 39.94246688676103,
+      "lon": -75.19930352855411
+    },
+    "ugv": {
+      "id": 4,
+      "lat": 39.9424748,
+      "lon": -75.199299
+    },
+    "matched": false,
+    "action": "",
+    "report": {
+      "hr": {
+        "value": 0,
+        "time_ago": 1758642548
+      },
+      "rr": {
+        "value": 0,
+        "time_ago": 1758642548
+      },
+      "alertness_ocular": {
+        "value": 0,
+        "time_ago": 1758642548
+      },
+      "alertness_verbal": {
+        "value": 0,
+        "time_ago": 1758642548
+      },
+      "alertness_motor": {
+        "value": 0,
+        "time_ago": 1758642548
+      },
+      "severe_hemorrhage": {
+        "value": 0,
+        "time_ago": 1758642548
+      },
+      "respiratory_distress": {
+        "value": 0,
+        "time_ago": 1758642548
+      },
+      "trauma_head": 0,
+      "trauma_torso": 0,
+      "trauma_lower_ext": 0,
+      "trauma_upper_ext": 0,
+      "temp": {
+        "value": 98,
+        "time_ago": 1758642548
+      },
+      "casualty_id": 11,
+      "team": "PennPronto",
+      "system": "JackalNVILA",
+      "location": {
+        "latitude": 39.9424748,
+        "longitude": -75.199299,
+        "time_ago": 1758642548
+      }
+    },
+    "image_path": null,
+    "timestamp": 1758642548.125514,
+    "pos_sent": true,
+    "init_supp_sent": true,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 12,
+    "uav": {
+      "id": 24,
+      "lat": 39.942433486095936,
+      "lon": -75.19921300215914
+    },
+    "ugv": {
+      "id": 3,
+      "lat": 39.942445899999996,
+      "lon": -75.1992104
+    },
+    "matched": false,
+    "action": "",
+    "report": {
+      "hr": {
+        "value": 0,
+        "time_ago": 1758642543
+      },
+      "rr": {
+        "value": 0,
+        "time_ago": 1758642543
+      },
+      "alertness_ocular": {
+        "value": 0,
+        "time_ago": 1758642543
+      },
+      "alertness_verbal": {
+        "value": 0,
+        "time_ago": 1758642543
+      },
+      "alertness_motor": {
+        "value": 0,
+        "time_ago": 1758642543
+      },
+      "severe_hemorrhage": {
+        "value": 0,
+        "time_ago": 1758642543
+      },
+      "respiratory_distress": {
+        "value": 0,
+        "time_ago": 1758642543
+      },
+      "trauma_head": 0,
+      "trauma_torso": 0,
+      "trauma_lower_ext": 0,
+      "trauma_upper_ext": 0,
+      "temp": {
+        "value": 98,
+        "time_ago": 1758642543
+      },
+      "casualty_id": 12,
+      "team": "PennPronto",
+      "system": "JackalNVILA",
+      "location": {
+        "latitude": 39.942445899999996,
+        "longitude": -75.1992104,
+        "time_ago": 1758642543
+      }
+    },
+    "image_path": null,
+    "timestamp": 1758642543.1182127,
+    "pos_sent": true,
+    "init_supp_sent": true,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 13,
+    "uav": {
+      "id": 25,
+      "lat": 39.94244534487634,
+      "lon": -75.1991462819447
+    },
+    "ugv": {
+      "id": 1,
+      "lat": 39.9424363,
+      "lon": -75.199154
+    },
+    "matched": false,
+    "action": "",
+    "report": {
+      "hr": {
+        "value": 0,
+        "time_ago": 1758642533
+      },
+      "rr": {
+        "value": 0,
+        "time_ago": 1758642533
+      },
+      "alertness_ocular": {
+        "value": 0,
+        "time_ago": 1758642533
+      },
+      "alertness_verbal": {
+        "value": 0,
+        "time_ago": 1758642533
+      },
+      "alertness_motor": {
+        "value": 0,
+        "time_ago": 1758642533
+      },
+      "severe_hemorrhage": {
+        "value": 0,
+        "time_ago": 1758642533
+      },
+      "respiratory_distress": {
+        "value": 0,
+        "time_ago": 1758642533
+      },
+      "trauma_head": 0,
+      "trauma_torso": 0,
+      "trauma_lower_ext": 0,
+      "trauma_upper_ext": 0,
+      "temp": {
+        "value": 98,
+        "time_ago": 1758642533
+      },
+      "casualty_id": 13,
+      "team": "PennPronto",
+      "system": "JackalNVILA",
+      "location": {
+        "latitude": 39.9424363,
+        "longitude": -75.199154,
+        "time_ago": 1758642533
+      }
+    },
+    "image_path": null,
+    "timestamp": 1758642533.1043081,
+    "pos_sent": true,
+    "init_supp_sent": true,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 14,
+    "uav": {
+      "id": 26,
+      "lat": 39.94240257178302,
+      "lon": -75.19908422847044
+    },
+    "ugv": {
+      "id": 0,
+      "lat": 39.942397299999996,
+      "lon": -75.1991105
+    },
+    "matched": false,
+    "action": "",
+    "report": {
+      "hr": {
+        "value": 0,
+        "time_ago": 1758642528
+      },
+      "rr": {
+        "value": 0,
+        "time_ago": 1758642528
+      },
+      "alertness_ocular": {
+        "value": 0,
+        "time_ago": 1758642528
+      },
+      "alertness_verbal": {
+        "value": 0,
+        "time_ago": 1758642528
+      },
+      "alertness_motor": {
+        "value": 0,
+        "time_ago": 1758642528
+      },
+      "severe_hemorrhage": {
+        "value": 0,
+        "time_ago": 1758642528
+      },
+      "respiratory_distress": {
+        "value": 0,
+        "time_ago": 1758642528
+      },
+      "trauma_head": 0,
+      "trauma_torso": 0,
+      "trauma_lower_ext": 0,
+      "trauma_upper_ext": 0,
+      "temp": {
+        "value": 98,
+        "time_ago": 1758642528
+      },
+      "casualty_id": 14,
+      "team": "PennPronto",
+      "system": "JackalNVILA",
+      "location": {
+        "latitude": 39.942397299999996,
+        "longitude": -75.1991105,
+        "time_ago": 1758642528
+      }
+    },
+    "image_path": null,
+    "timestamp": 1758642528.0873234,
+    "pos_sent": true,
+    "init_supp_sent": true,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 15,
+    "uav": {
+      "id": 28,
+      "lat": 39.942380852471935,
+      "lon": -75.19915117813206
+    },
+    "ugv": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "matched": false,
+    "action": "",
+    "report": {},
+    "image_path": null,
+    "timestamp": 1758642485.7853255,
+    "pos_sent": true,
+    "init_supp_sent": false,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 16,
+    "uav": {
+      "id": 18,
+      "lat": 39.9423831347912,
+      "lon": -75.19908166894585
+    },
+    "ugv": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "matched": false,
+    "action": "",
+    "report": {},
+    "image_path": null,
+    "timestamp": 1758642485.7852824,
+    "pos_sent": true,
+    "init_supp_sent": false,
+    "update_sent": false
+  }
+]

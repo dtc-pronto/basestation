@@ -1,0 +1,4 @@
+{
+    "ugv_ugv_distance_threshold": 2.0,
+    "ugv_uav_distance_threshold": 5.0
+}
