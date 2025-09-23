@@ -5,6 +5,9 @@ from dotenv import load_dotenv
 import ast
 import rospy
 
+total_init_pos = 0
+total_init_supp = 0
+total_update = 0
 #TODO: add casulty_id, team, system, time_ago to submit_scorecard and submit_image functions
 def submit_image(image_path, time, id):
     # Load .env file
@@ -48,9 +51,11 @@ def convert_to_enum(value):
     elif (value.lower() == "closed"):
         return 1
     elif (value.lower() == "abnormal"):
-        return 2
+        return 1
     elif (value.lower() == "untestable"):
         return 3
+    elif (value.lower() == "absent"):
+        return 2
 
 def start_run():
     load_dotenv()
@@ -72,6 +77,8 @@ def start_run():
     print(response.status_code, r.json())
 
 def update_casualty(id, payload):
+    global total_update
+    total_update += 1
     load_dotenv()
     print("Updating scorecard...")
     TOKEN = os.getenv("TOKEN")
@@ -88,11 +95,15 @@ def update_casualty(id, payload):
     for key in payload:
       if isinstance(payload[key], dict) and "time_ago" in payload[key].keys():
         payload[key]["time_ago"] = max(current_time - payload[key]["time_ago"], 0)
+    
+    payload["casualty_id"] = id
                  
     r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
     print(r.status_code, r.json())
 
-def update_position(id, payload, lat, lon, time):
+def init_position(id, lat, lon, time):
+    global total_init_pos
+    total_init_pos += 1
     load_dotenv()
     print("Updating scorecard...")
     TOKEN = os.getenv("TOKEN")
@@ -105,42 +116,6 @@ def update_position(id, payload, lat, lon, time):
     }
 
     payload = {
-      "hr": {
-        "value": 0,
-        "time_ago": max(time - rospy.Time.now().secs, 0),
-      },
-      "rr": {
-        "value": 0,
-        "time_ago": max(time - rospy.Time.now().secs, 0),
-      },
-      "alertness_ocular": {
-        "value": 0,
-        "time_ago": max(time - rospy.Time.now().secs, 0),
-      },
-      "alertness_verbal": {
-        "value": 0,
-        "time_ago": max(time - rospy.Time.now().secs, 0),
-      },
-      "alertness_motor": {
-        "value": 0,
-        "time_ago": max(time - rospy.Time.now().secs, 0),
-      },
-      "severe_hemorrhage": {
-        "value": 0,
-        "time_ago": max(time - rospy.Time.now().secs, 0),
-      },
-      "respiratory_distress": {
-        "value": 0,
-        "time_ago": max(time - rospy.Time.now().secs, 0),
-      },
-      "trauma_head": 0,
-      "trauma_torso": 0,
-      "trauma_lower_ext": 0,
-      "trauma_upper_ext": 0,
-      "temp": {
-        "value": 98,
-        "time_ago": max(time - rospy.Time.now().secs, 0),
-      },
       "casualty_id": id,
       "team": "PennPRONTO",
       "system": "JackalNVILA",
@@ -153,8 +128,41 @@ def update_position(id, payload, lat, lon, time):
     
     print(payload)
 
-    r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
+    r = requests.post(f"{BASE_URL}/api/initial_report", headers=headers, json=payload)
     print(r.status_code, r.json())
+
+def init_supplement(id, payload):
+    global total_init_supp
+    total_init_supp += 1
+    load_dotenv()
+    print("Initial Supplement...")
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+    
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
+
+    #Go through all time_ago fields and update them to be the difference between now and the time in the payload
+    current_time = rospy.Time.now().secs
+    for key in payload:
+      if isinstance(payload[key], dict) and "time_ago" in payload[key].keys():
+        payload[key]["time_ago"] = max(current_time - payload[key]["time_ago"], 0)
+    
+    payload["casualty_id"] = id
+
+    print(payload)
+                 
+    r = requests.post(f"{BASE_URL}/api/initial_report", headers=headers, json=payload)
+    print(r.status_code, r.json())
+
+def total_posts():
+    global total_init_pos, total_init_supp, total_update
+    print(f"Total Initial Positions: {total_init_pos}")
+    print(f"Total Initial Supplements: {total_init_supp}")
+    print(f"Total Updates: {total_update}")
 
 def report_new_casualty(id, lat, long, time):
     load_dotenv()

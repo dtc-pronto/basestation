@@ -28,7 +28,7 @@ from helpers import gps_distance
 """
 
 import rospy
-from submission import start_run, submit_image, report_new_casualty, update_casualty, update_position
+from submission import start_run, submit_image, report_new_casualty, update_casualty, init_position, init_supplement, total_posts
 from helpers import gps_distance, closest_casualty, update_drone_casualty_db, update_jackal_casualty_db, parse_report_string
 
 from std_msgs.msg import Bool, String, UInt8, Float32
@@ -37,6 +37,7 @@ from sensor_msgs.msg import Image, NavSatFix
 from cv_bridge import CvBridge
 import cv2
 import json
+import copy
 
 jackal_db_entry = {
     "id": None,
@@ -110,7 +111,7 @@ class SubmissionNode:
         self.drone_casualty_dict_list = []
 
         for elt in msg.casualties:
-            new_casualty = drone_db_entry.copy()
+            new_casualty = copy.deepcopy(drone_db_entry)
             new_casualty["id"] = elt.casualty_id
             new_casualty["lat"] = elt.location.latitude
             new_casualty["lon"] = elt.location.longitude
@@ -125,16 +126,14 @@ class SubmissionNode:
             matching_table = json.load(f)
         
         for elt in matching_table:
-            if elt["action"] == "init":
-                report_new_casualty(id=elt["casualty_id"], lat=elt["uav"]["lat"], long=elt["uav"]["lon"], time=elt["timestamp"])
+            if elt["action"] == "init" and not(elt["pos_sent"]):
+                init_position(id=elt["casualty_id"], lat=elt["uav"]["lat"], lon=elt["uav"]["lon"], time=elt["timestamp"])
                 elt["action"] = ""
-            elif elt["action"] == "update_pos":
-                if elt["report"] != {}: #ideally i think this should never get hit
-                    elt["report"]["location"]["time_ago"] = elt["timestamp"]
-                update_position(elt["casualty_id"], elt["report"], elt["uav"]["lat"], elt["uav"]["lon"], time=elt["timestamp"])
-                elt["action"] = ""                
+                elt["pos_sent"] = True                
         with open(self.matching_table, "w") as f:
             json.dump(matching_table, f, indent=2)
+
+        total_posts()
 
     def deimosImageCallback(self, msg):
         print("[Scorecard][STATUS] Received image from /deimos/camera/image")
@@ -156,7 +155,7 @@ class SubmissionNode:
         report_str = msg.data
         print(report_str)
         report = parse_report_string(report_str)
-        new_jackal_entry = jackal_db_entry.copy()
+        new_jackal_entry = copy.deepcopy(jackal_db_entry)
         new_jackal_entry["id"] = len(self.jackal_casualty_dict_list)
         new_jackal_entry["lat"] = report["location"]["latitude"]
         new_jackal_entry["lon"] = report["location"]["longitude"]
@@ -175,10 +174,7 @@ class SubmissionNode:
 
         for elt in matching_table:
             if elt["action"] == "init_update":
-                report_new_casualty(id=elt["casualty_id"], lat=elt["ugv"]["lat"], long=elt["ugv"]["lon"], time=elt["timestamp"])
-                elt["report"]["id"] = elt["casualty_id"]
-                update_casualty(elt["casualty_id"], elt["report"])
-                
+                init_supplement(elt["casualty_id"], elt["report"])
                 elt["image_path"] = self.most_recent_deimos_image_path
                 try:
                     if elt["image_path"] is not None:
@@ -186,11 +182,19 @@ class SubmissionNode:
                 except:
                     print("[Scorecard][ERROR] Failed to submit image")
                 elt["action"] = ""
-            elif elt["action"] == "update":
-                update_casualty(elt["casualty_id"],elt["report"])
-                elt["action"] = ""                
+                elt["pos_sent"] = True
+                elt["init_supp_sent"] = True
+            elif elt["action"] == "update" and elt["init_supp_sent"]:
+                if elt["update_sent"]:
+                    print("[Scorecard][STATUS] Two Jackals have already triaged this. Update already sent for casualty_id ", elt["casualty_id"])
+                else:
+                    update_casualty(elt["casualty_id"], elt["report"])
+                    elt["action"] = ""                
+                    elt["update_sent"] = True
         with open(self.matching_table, "w") as f:
             json.dump(matching_table, f, indent=2)
+
+        total_posts()
 
         
     def phobosImageCallback(self, msg):

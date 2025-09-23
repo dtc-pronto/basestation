@@ -7,6 +7,7 @@ import copy
 
 #make a struct for matching table entry
 matching_entry = {
+    "report_id": None,
     "casualty_id": None,
     "uav": {
         "id": None,
@@ -22,7 +23,11 @@ matching_entry = {
     "action": "",
     "report": {},
     "image_path": None,
-    "timestamp": None
+    "timestamp": None,
+    "pos_sent": False,
+    "init_supp_sent": False,
+    "update_sent": False
+
 }
 
 
@@ -82,7 +87,8 @@ def update_drone_casualty_db(ugv_uav_threshold=7):
             if entry["uav"]["id"] == drone_det["id"] and entry["ugv"]["id"] == None:
                 print(f"{entry['uav']['id']} + {drone_det['id']}")
                 entry["uav"]["lat"], entry["uav"]["lon"] = drone_det["lat"], drone_det["lon"]
-                entry["action"] = "update_pos"
+                print(f"Updating drone position for casualty {entry['casualty_id']}")
+                entry["action"] = ""
                 entry["timestamp"] = rospy.Time.now().to_sec()
     
     #For each drone 
@@ -105,13 +111,9 @@ def update_drone_casualty_db(ugv_uav_threshold=7):
             matching_table[closest_idx]["uav"]["lat"], matching_table[closest_idx]["uav"]["lon"] = drone_det["lat"], drone_det["lon"]
             matching_table[closest_idx]["action"] = "" #we don't do anything since the jackal found it first
             matching_table[closest_idx]["timestamp"] = rospy.Time.now().to_sec()
-            print("FOUND A MATCH SHOULD NOT BE ADDING NEW")
         #or else this is a new casualty for the drone
         elif not any(entry["uav"]["id"] == drone_det["id"] for entry in matching_table):
             new_entry = copy.deepcopy(matching_entry)
-            print("ADDING NEW ENTRY???")
-            print(new_entry)
-            print("ssssssssssssssssssss")
             new_entry["uav"]["id"] = drone_det["id"]
             new_entry["uav"]["lat"], new_entry["uav"]["lon"] = drone_det["lat"], drone_det["lon"]
             new_entry["casualty_id"] = len(matching_table)
@@ -164,12 +166,12 @@ def update_jackal_casualty_db(ugv_uav_threshold=7,ugv_ugv_threshold=2):
             if distance < min_dist:
                 min_dist = distance
                 closest_idx = i
-    if min_dist < ugv_uav_threshold: #this means another jackal found this first
+    if min_dist < ugv_uav_threshold: #this means drone found this first
         matching_table[closest_idx]["ugv"]["id"] = latest_casualty["id"]
         matching_table[closest_idx]["ugv"]["lat"], matching_table[closest_idx]["ugv"]["lon"] = latest_casualty["lat"], latest_casualty["lon"]
         matching_table[closest_idx]["report"] = latest_casualty["report"]
         matching_table[closest_idx]["image_path"] = latest_casualty["image_path"]
-        matching_table[closest_idx]["action"] = "update"
+        matching_table[closest_idx]["action"] = "init_update"
         matching_table[closest_idx]["timestamp"] = rospy.Time.now().to_sec()
     else: #this means jackal found this before a drone did
         new_entry = copy.deepcopy(matching_entry)

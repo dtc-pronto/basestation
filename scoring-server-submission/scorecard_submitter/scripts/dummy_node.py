@@ -13,8 +13,6 @@ import ast
 import json
 import utm
 import rospy
-from sensor_msgs.msg import Image, CompressedImage
-from wfov_camera_msgs.msg import WFOVImage
 from helpers import gps_distance
 
 
@@ -28,13 +26,9 @@ from helpers import gps_distance
 """
 
 import rospy
-from submission import start_run, submit_image, report_new_casualty, update_casualty, update_position
-from helpers import gps_distance, closest_casualty, update_drone_casualty_db, update_jackal_casualty_db, parse_report_string
 
 from std_msgs.msg import Bool, String, UInt8, Float32
-from dtc_msgs.msg import ScoreCard, CasualtyFixArray, CasualtyFix
-from sensor_msgs.msg import Image, NavSatFix
-from cv_bridge import CvBridge
+
 import cv2
 import json
 
