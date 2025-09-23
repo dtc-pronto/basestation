@@ -197,22 +197,67 @@ class SubmissionNode:
 
         total_posts()
 
-        
-    def phobosImageCallback(self, msg):
+        def phobosImageCallback(self, msg):
         print("[Scorecard][STATUS] Received image from /phobos/camera/image")
         bridge = CvBridge()
         cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
         timestamp = int(rospy.Time.now().to_sec())
-        image_path = f"/data/deimos_image_{timestamp}.jpg"
+        image_path = f"/home/dtc/ws/data/casualty_images/phobos_image_{timestamp}.jpg"
         self.most_recent_deimos_image_path = image_path
-        # Save the image to a file\
         
+        # Save the image to a file
         cv2.imwrite(image_path, cv_image)
         print(f"[Scorecard][STATUS] Image saved to {image_path}")
-        
 
     def phobosScoreCallback(self, msg):
-        pass
+        print("[Scorecard][STATUS] Received report from /deimos/report_status")
+        print("[Scorecard][STATUS] Publishing report status")
+
+        #extract the string from the message
+        report_str = msg.data
+        print(report_str)
+        report = parse_report_string(report_str)
+        new_jackal_entry = copy.deepcopy(jackal_db_entry)
+        new_jackal_entry["id"] = len(self.jackal_casualty_dict_list)
+        new_jackal_entry["lat"] = report["location"]["latitude"]
+        new_jackal_entry["lon"] = report["location"]["longitude"]
+        new_jackal_entry["report"] = report
+        new_jackal_entry["image_path"] = self.most_recent_deimos_image_path
+
+        self.jackal_casualty_dict_list.append(new_jackal_entry)
+
+        with open(self.jackal_db, "w") as f:
+            json.dump(self.jackal_casualty_dict_list, f, indent=2)
+        
+        update_jackal_casualty_db(self.config["ugv_uav_distance_threshold"], self.config["ugv_ugv_distance_threshold"])
+
+        with open(self.matching_table, "r") as f:
+            matching_table = json.load(f)
+
+        for elt in matching_table:
+            if elt["action"] == "init_update":
+                init_supplement(elt["casualty_id"], elt["report"])
+                elt["image_path"] = self.most_recent_deimos_image_path
+                try:
+                    if elt["image_path"] is not None:
+                        submit_image(elt["casualty_id"], elt["image_path"])
+                except:
+                    print("[Scorecard][ERROR] Failed to submit image")
+                elt["action"] = ""
+                elt["pos_sent"] = True
+                elt["init_supp_sent"] = True
+            elif elt["action"] == "update" and elt["init_supp_sent"]:
+                print("Should be updating")
+                if elt["update_sent"]:
+                    print("[Scorecard][STATUS] Two Jackals have already triaged this. Update already sent for casualty_id ", elt["casualty_id"])
+                else:
+                    update_casualty(elt["casualty_id"], elt["report"])
+                    elt["action"] = ""                
+                    elt["update_sent"] = True
+        with open(self.matching_table, "w") as f:
+            json.dump(matching_table, f, indent=2)
+
+        total_posts()
 
 if __name__ == "__main__":
     rospy.init_node("scorecard_submitter")
