@@ -26,7 +26,7 @@ def submit_image(image_path, time, id):
         "casualty_id": id,
         "team": "PennPRONTO",
         "system": "JackalNVILA",
-        "time_ago": rospy.Time.now().secs - time,
+        "time_ago": max(time - rospy.Time.now().secs, 0),
     }
 
     r = requests.post(f"{BASE_URL}/api/casualty_image", headers=headers, files=files, data=data)
@@ -87,7 +87,7 @@ def update_casualty(id, payload):
     current_time = rospy.Time.now().secs
     for key in payload:
       if isinstance(payload[key], dict) and "time_ago" in payload[key].keys():
-        payload[key]["time_ago"] = payload[key]["time_ago"] - current_time
+        payload[key]["time_ago"] = max(current_time - payload[key]["time_ago"], 0)
                  
     r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
     print(r.status_code, r.json())
@@ -107,31 +107,31 @@ def update_position(id, payload, lat, lon, time):
     payload = {
       "hr": {
         "value": 0,
-        "time_ago": rospy.Time.now().secs - time,
+        "time_ago": max(time - rospy.Time.now().secs, 0),
       },
       "rr": {
         "value": 0,
-        "time_ago": rospy.Time.now().secs - time,
+        "time_ago": max(time - rospy.Time.now().secs, 0),
       },
       "alertness_ocular": {
         "value": 0,
-        "time_ago": rospy.Time.now().secs - time,
+        "time_ago": max(time - rospy.Time.now().secs, 0),
       },
       "alertness_verbal": {
         "value": 0,
-        "time_ago": rospy.Time.now().secs - time,
+        "time_ago": max(time - rospy.Time.now().secs, 0),
       },
       "alertness_motor": {
         "value": 0,
-        "time_ago": rospy.Time.now().secs - time,
+        "time_ago": max(time - rospy.Time.now().secs, 0),
       },
       "severe_hemorrhage": {
         "value": 0,
-        "time_ago": rospy.Time.now().secs - time,
+        "time_ago": max(time - rospy.Time.now().secs, 0),
       },
       "respiratory_distress": {
         "value": 0,
-        "time_ago": rospy.Time.now().secs - time,
+        "time_ago": max(time - rospy.Time.now().secs, 0),
       },
       "trauma_head": 0,
       "trauma_torso": 0,
@@ -139,7 +139,7 @@ def update_position(id, payload, lat, lon, time):
       "trauma_upper_ext": 0,
       "temp": {
         "value": 98,
-        "time_ago": rospy.Time.now().secs - time,
+        "time_ago": max(time - rospy.Time.now().secs, 0),
       },
       "casualty_id": id,
       "team": "PennPRONTO",
@@ -147,7 +147,7 @@ def update_position(id, payload, lat, lon, time):
       "location": {
         "latitude": lat,
         "longitude": lon,
-        "time_ago": rospy.Time.now().secs - time,
+        "time_ago": max(time - rospy.Time.now().secs, 0),
       }
     }
     
@@ -171,31 +171,31 @@ def report_new_casualty(id, lat, long, time):
     payload = {
       "hr": {
         "value": 0,
-        "time_ago":  rospy.Time.now().secs - time,
+        "time_ago":  max(time - rospy.Time.now().secs, 0),
       },
       "rr": {
         "value": 0,
-        "time_ago":  rospy.Time.now().secs - time,
+        "time_ago":  max(time - rospy.Time.now().secs, 0),
       },
       "alertness_ocular": {
         "value": 0,
-        "time_ago":  rospy.Time.now().secs - time,
+        "time_ago":  max(time - rospy.Time.now().secs, 0),
       },
       "alertness_verbal": {
         "value": 0,
-        "time_ago":  rospy.Time.now().secs - time,
+        "time_ago":  max(time - rospy.Time.now().secs, 0),
       },
       "alertness_motor": {
         "value": 0,
-        "time_ago":  rospy.Time.now().secs - time,
+        "time_ago":  max(time - rospy.Time.now().secs, 0),
       },
       "severe_hemorrhage": {
         "value": 0,
-        "time_ago":  rospy.Time.now().secs - time,
+        "time_ago":  max(time - rospy.Time.now().secs, 0),
       },
       "respiratory_distress": {
         "value": 0,
-        "time_ago":  rospy.Time.now().secs - time,
+        "time_ago":  max(time - rospy.Time.now().secs, 0),
       },
       "trauma_head": 0,
       "trauma_torso": 0,
@@ -203,7 +203,7 @@ def report_new_casualty(id, lat, long, time):
       "trauma_upper_ext": 0,
       "temp": {
         "value": 98,
-        "time_ago":  rospy.Time.now().secs - time,
+        "time_ago":  max(time - rospy.Time.now().secs, 0),
       },
       "casualty_id": id,
       "team": "PennPRONTO",
@@ -211,7 +211,7 @@ def report_new_casualty(id, lat, long, time):
       "location": {
         "latitude": lat,
         "longitude": long,
-        "time_ago":  rospy.Time.now().secs - time,
+        "time_ago":  max(time - rospy.Time.now().secs, 0),
       }
     }
 

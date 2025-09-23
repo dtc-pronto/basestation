@@ -178,6 +178,13 @@ class SubmissionNode:
                 report_new_casualty(id=elt["casualty_id"], lat=elt["ugv"]["lat"], long=elt["ugv"]["lon"], time=elt["timestamp"])
                 elt["report"]["id"] = elt["casualty_id"]
                 update_casualty(elt["casualty_id"], elt["report"])
+                
+                elt["image_path"] = self.most_recent_deimos_image_path
+                try:
+                    if elt["image_path"] is not None:
+                        submit_image(elt["casualty_id"], elt["image_path"])
+                except:
+                    print("[Scorecard][ERROR] Failed to submit image")
                 elt["action"] = ""
             elif elt["action"] == "update":
                 update_casualty(elt["casualty_id"],elt["report"])
