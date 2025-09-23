@@ -128,7 +128,6 @@ class SubmissionNode:
             if elt["action"] == "init":
                 report_new_casualty(id=elt["casualty_id"], lat=elt["uav"]["lat"], long=elt["uav"]["lon"], time=elt["timestamp"])
                 elt["action"] = ""
-                exit(1)
             elif elt["action"] == "update_pos":
                 if elt["report"] != {}: #ideally i think this should never get hit
                     elt["report"]["location"]["time_ago"] = elt["timestamp"]
@@ -169,7 +168,7 @@ class SubmissionNode:
         with open(self.jackal_db, "w") as f:
             json.dump(self.jackal_casualty_dict_list, f, indent=2)
         
-        update_jackal_casualty_db(self.config["ugv_uav_distance_threshold"])
+        update_jackal_casualty_db(self.config["ugv_uav_distance_threshold"], self.config["ugv_ugv_distance_threshold"])
 
         with open(self.matching_table, "r") as f:
             matching_table = json.load(f)

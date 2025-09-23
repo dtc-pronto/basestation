@@ -24,8 +24,8 @@ def submit_image(image_path, time, id):
 
     data = {
         "casualty_id": id,
-        "team": "Penn",
-        "system": "PennPRONTO",
+        "team": "PennPRONTO",
+        "system": "JackalNVILA",
         "time_ago": rospy.Time.now().secs - time,
     }
 
@@ -87,7 +87,7 @@ def update_casualty(id, payload):
     current_time = rospy.Time.now().secs
     for key in payload:
       if isinstance(payload[key], dict) and "time_ago" in payload[key].keys():
-        payload[key]["time_ago"] = current_time - payload[key]["time_ago"]
+        payload[key]["time_ago"] = payload[key]["time_ago"] - current_time
                  
     r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
     print(r.status_code, r.json())
@@ -107,31 +107,31 @@ def update_position(id, payload, lat, lon, time):
     payload = {
       "hr": {
         "value": 0,
-        "time_ago": time - rospy.Time.now().secs,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "rr": {
         "value": 0,
-        "time_ago": time - rospy.Time.now().secs,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "alertness_ocular": {
         "value": 0,
-        "time_ago": time - rospy.Time.now().secs,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "alertness_verbal": {
         "value": 0,
-        "time_ago": time - rospy.Time.now().secs,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "alertness_motor": {
         "value": 0,
-        "time_ago": time - rospy.Time.now().secs,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "severe_hemorrhage": {
         "value": 0,
-        "time_ago": time - rospy.Time.now().secs,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "respiratory_distress": {
         "value": 0,
-        "time_ago": time - rospy.Time.now().secs,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "trauma_head": 0,
       "trauma_torso": 0,
@@ -139,15 +139,15 @@ def update_position(id, payload, lat, lon, time):
       "trauma_upper_ext": 0,
       "temp": {
         "value": 98,
-        "time_ago": time - rospy.Time.now().secs,
+        "time_ago": rospy.Time.now().secs - time,
       },
       "casualty_id": id,
-      "team": "Penn",
-      "system": "PennPRONTO",
+      "team": "PennPRONTO",
+      "system": "JackalNVILA",
       "location": {
         "latitude": lat,
         "longitude": lon,
-        "time_ago": time - rospy.Time.now().secs,
+        "time_ago": rospy.Time.now().secs - time,
       }
     }
     
@@ -171,31 +171,31 @@ def report_new_casualty(id, lat, long, time):
     payload = {
       "hr": {
         "value": 0,
-        "time_ago":  time - rospy.Time.now().secs,
+        "time_ago":  rospy.Time.now().secs - time,
       },
       "rr": {
         "value": 0,
-        "time_ago":  time - rospy.Time.now().secs,
+        "time_ago":  rospy.Time.now().secs - time,
       },
       "alertness_ocular": {
         "value": 0,
-        "time_ago":  time - rospy.Time.now().secs,
+        "time_ago":  rospy.Time.now().secs - time,
       },
       "alertness_verbal": {
         "value": 0,
-        "time_ago":  time - rospy.Time.now().secs,
+        "time_ago":  rospy.Time.now().secs - time,
       },
       "alertness_motor": {
         "value": 0,
-        "time_ago":  time - rospy.Time.now().secs,
+        "time_ago":  rospy.Time.now().secs - time,
       },
       "severe_hemorrhage": {
         "value": 0,
-        "time_ago":  time - rospy.Time.now().secs,
+        "time_ago":  rospy.Time.now().secs - time,
       },
       "respiratory_distress": {
         "value": 0,
-        "time_ago":  time - rospy.Time.now().secs,
+        "time_ago":  rospy.Time.now().secs - time,
       },
       "trauma_head": 0,
       "trauma_torso": 0,
@@ -203,15 +203,15 @@ def report_new_casualty(id, lat, long, time):
       "trauma_upper_ext": 0,
       "temp": {
         "value": 98,
-        "time_ago":  time - rospy.Time.now().secs,
+        "time_ago":  rospy.Time.now().secs - time,
       },
       "casualty_id": id,
-      "team": "Penn",
-      "system": "PennPRONTO",
+      "team": "PennPRONTO",
+      "system": "JackalNVILA",
       "location": {
         "latitude": lat,
         "longitude": long,
-        "time_ago":  time - rospy.Time.now().secs,
+        "time_ago":  rospy.Time.now().secs - time,
       }
     }
 
@@ -259,8 +259,8 @@ def parse_report_string(report_str):
         "time_ago": 0,
       },
       "casualty_id": 0,
-      "team": "test_team",
-      "system": "test_system",
+      "team": "PennPRONTO",
+      "system": "JackalNVILA",
       "location": {
         "latitude": 0,
         "longitude": 0,
