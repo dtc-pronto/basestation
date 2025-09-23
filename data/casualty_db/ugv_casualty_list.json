@@ -1,60 +1,8 @@
 [
   {
     "id": 0,
-    "lat": 39.942397299999996,
-    "lon": -75.1991105,
-    "report": {
-      "hr": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "rr": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "alertness_ocular": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "alertness_verbal": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "alertness_motor": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "severe_hemorrhage": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "respiratory_distress": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "trauma_head": 0,
-      "trauma_torso": 0,
-      "trauma_lower_ext": 0,
-      "trauma_upper_ext": 0,
-      "temp": {
-        "value": 98,
-        "time_ago": 0
-      },
-      "casualty_id": 0,
-      "team": "PennPronto",
-      "system": "JackalNVILA",
-      "location": {
-        "latitude": 39.942397299999996,
-        "longitude": -75.1991105,
-        "time_ago": 0
-      }
-    },
-    "image_path": null
-  },
-  {
-    "id": 1,
-    "lat": 39.9424363,
-    "lon": -75.199154,
+    "lat": 0.0,
+    "lon": 0.0,
     "report": {
       "hr": {
         "value": 0,
@@ -94,19 +42,19 @@
       },
       "casualty_id": 1,
       "team": "PennPronto",
-      "system": "JackalNVILA",
+      "system": "deimos",
       "location": {
-        "latitude": 39.9424363,
-        "longitude": -75.199154,
+        "latitude": 0.0,
+        "longitude": 0.0,
         "time_ago": 0
       }
     },
-    "image_path": null
+    "image_path": "/home/dtc/ws/data/casualty_images/deimos_image_1758663668.jpg"
   },
   {
-    "id": 2,
-    "lat": 39.9424886,
-    "lon": -75.1992442,
+    "id": 1,
+    "lat": 0.0,
+    "lon": 0.0,
     "report": {
       "hr": {
         "value": 0,
@@ -146,19 +94,19 @@
       },
       "casualty_id": 2,
       "team": "PennPronto",
-      "system": "JackalNVILA",
+      "system": "deimos",
       "location": {
-        "latitude": 39.9424886,
-        "longitude": -75.1992442,
+        "latitude": 0.0,
+        "longitude": 0.0,
         "time_ago": 0
       }
     },
-    "image_path": null
+    "image_path": "/home/dtc/ws/data/casualty_images/deimos_image_1758663668.jpg"
   },
   {
-    "id": 3,
-    "lat": 39.942445899999996,
-    "lon": -75.1992104,
+    "id": 2,
+    "lat": 0.0,
+    "lon": 0.0,
     "report": {
       "hr": {
         "value": 0,
@@ -198,117 +146,13 @@
       },
       "casualty_id": 3,
       "team": "PennPronto",
-      "system": "JackalNVILA",
+      "system": "deimos",
       "location": {
-        "latitude": 39.942445899999996,
-        "longitude": -75.1992104,
+        "latitude": 0.0,
+        "longitude": 0.0,
         "time_ago": 0
       }
     },
-    "image_path": null
-  },
-  {
-    "id": 4,
-    "lat": 39.9424748,
-    "lon": -75.199299,
-    "report": {
-      "hr": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "rr": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "alertness_ocular": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "alertness_verbal": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "alertness_motor": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "severe_hemorrhage": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "respiratory_distress": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "trauma_head": 0,
-      "trauma_torso": 0,
-      "trauma_lower_ext": 0,
-      "trauma_upper_ext": 0,
-      "temp": {
-        "value": 98,
-        "time_ago": 0
-      },
-      "casualty_id": 4,
-      "team": "PennPronto",
-      "system": "JackalNVILA",
-      "location": {
-        "latitude": 39.9424748,
-        "longitude": -75.199299,
-        "time_ago": 0
-      }
-    },
-    "image_path": null
-  },
-  {
-    "id": 5,
-    "lat": 39.9425218,
-    "lon": -75.1993256,
-    "report": {
-      "hr": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "rr": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "alertness_ocular": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "alertness_verbal": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "alertness_motor": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "severe_hemorrhage": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "respiratory_distress": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "trauma_head": 0,
-      "trauma_torso": 0,
-      "trauma_lower_ext": 0,
-      "trauma_upper_ext": 0,
-      "temp": {
-        "value": 98,
-        "time_ago": 0
-      },
-      "casualty_id": 5,
-      "team": "PennPronto",
-      "system": "JackalNVILA",
-      "location": {
-        "latitude": 39.9425218,
-        "longitude": -75.1993256,
-        "time_ago": 0
-      }
-    },
-    "image_path": null
+    "image_path": "/home/dtc/ws/data/casualty_images/deimos_image_1758663668.jpg"
   }
 ]
