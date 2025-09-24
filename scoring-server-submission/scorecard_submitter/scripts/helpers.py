@@ -1,3 +1,4 @@
+import os
 import json
 import math
 import utm
@@ -126,11 +127,11 @@ def update_drone_casualty_db(ugv_uav_threshold=7):
         json.dump(matching_table, f, indent=2)
 
 
-def update_jackal_casualty_db(ugv_uav_threshold=7,ugv_ugv_threshold=2):
+def update_jackal_casualty_db(db_path, ugv_uav_threshold=7,ugv_ugv_threshold=2):
     print("UPDATING JACKAL CASUALTY DB")
-    with open("/home/dtc/ws/data/casualty_db/ugv_casualty_list.json", "r") as f:
+    with open(os.path.join(db_path,"ugv_casualty_list.json"), "r") as f:
         ugv_db = json.load(f)
-    with open("/home/dtc/ws/data/casualty_db/matching_table.json", "r") as f:
+    with open(os.path.join(db_path, "matching_table.json"), "r") as f:
         matching_table = json.load(f)
 
     latest_casualty = ugv_db[-1]
@@ -153,7 +154,7 @@ def update_jackal_casualty_db(ugv_uav_threshold=7,ugv_ugv_threshold=2):
         matching_table[closest_idx]["action"] = "update"
         matching_table[closest_idx]["timestamp"] = rospy.Time.now().to_sec()
 
-        with open("/home/dtc/ws/data/casualty_db/matching_table.json", "w") as f:
+        with open(os.path.join(db_path, "matching_table.json"), "w") as f:
             json.dump(matching_table, f, indent=2)
         return
     
@@ -188,7 +189,7 @@ def update_jackal_casualty_db(ugv_uav_threshold=7,ugv_ugv_threshold=2):
         new_entry["timestamp"] = rospy.Time.now().to_sec()
         matching_table.append(new_entry)
 
-    with open("/home/dtc/ws/data/casualty_db/matching_table.json", "w") as f:
+    with open(os.path.join(db_path, "matching_table.json"), "w") as f:
         json.dump(matching_table, f, indent=2)
 
     

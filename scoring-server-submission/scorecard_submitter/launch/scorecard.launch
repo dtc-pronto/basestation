@@ -1,7 +1,6 @@
 <launch>
-  <node name="scorecard_submission_node"
-        pkg="scorecard_submitter"
-        type="submission_node.py"
-        output="screen"
-        required="true" />
+  <node name="scorecard_submission_node" pkg="scorecard_submitter" type="submission_node.py" output="screen" required="true">
+    <param name="threshold_path" value="$(find scorecard_submitter)/config/threshold_config.json"/>
+    <param name="data_path" value="/home/dtc/data"/>
+  </node>
 </launch>

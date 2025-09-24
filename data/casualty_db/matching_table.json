@@ -9,8 +9,75 @@
     },
     "ugv": {
       "id": 0,
-      "lat": 0.0,
-      "lon": 0.0
+      "lat": 40.0427883,
+      "lon": -75.2853434
+    },
+    "matched": false,
+    "action": "",
+    "report": {
+      "hr": {
+        "value": 0,
+        "time_ago": 1758675248
+      },
+      "rr": {
+        "value": 0,
+        "time_ago": 1758675248
+      },
+      "alertness_ocular": {
+        "value": 0,
+        "time_ago": 1758675248
+      },
+      "alertness_verbal": {
+        "value": 0,
+        "time_ago": 1758675248
+      },
+      "alertness_motor": {
+        "value": 0,
+        "time_ago": 1758675248
+      },
+      "severe_hemorrhage": {
+        "value": 0,
+        "time_ago": 1758675248
+      },
+      "respiratory_distress": {
+        "value": 0,
+        "time_ago": 1758675248
+      },
+      "trauma_head": 0,
+      "trauma_torso": 0,
+      "trauma_lower_ext": 0,
+      "trauma_upper_ext": 0,
+      "temp": {
+        "value": 98,
+        "time_ago": 1758675248
+      },
+      "casualty_id": 0,
+      "team": "PennPronto",
+      "system": "deimos",
+      "location": {
+        "latitude": 40.0427883,
+        "longitude": -75.2853434,
+        "time_ago": 1758675248
+      }
+    },
+    "image_path": null,
+    "timestamp": 1758675248.4779775,
+    "pos_sent": true,
+    "init_supp_sent": true,
+    "update_sent": false
+  },
+  {
+    "report_id": null,
+    "casualty_id": 1,
+    "uav": {
+      "id": null,
+      "lat": null,
+      "lon": null
+    },
+    "ugv": {
+      "id": 1,
+      "lat": 40.042738799999995,
+      "lon": -75.2853348
     },
     "matched": false,
     "action": "update",
@@ -51,19 +118,19 @@
         "value": 98,
         "time_ago": 0
       },
-      "casualty_id": 3,
+      "casualty_id": 2,
       "team": "PennPronto",
       "system": "deimos",
       "location": {
-        "latitude": 0.0,
-        "longitude": 0.0,
+        "latitude": 40.042738799999995,
+        "longitude": -75.2853348,
         "time_ago": 0
       }
     },
-    "image_path": "/home/dtc/ws/data/casualty_images/deimos_image_1758663668.jpg",
-    "timestamp": 1758663780.3483133,
+    "image_path": "/home/dtc/ws/data/casualty_images/deimos_image_1758675566.jpg",
+    "timestamp": 1758748749.213396,
     "pos_sent": true,
     "init_supp_sent": true,
-    "update_sent": true
+    "update_sent": false
   }
 ]

@@ -5,6 +5,8 @@
   <arg name="sender" default="False"/>
   <arg name="rtk" default="False"/>
 
+  <rosparam command="load" file="$(find basestation)/config/robots.yaml"/>
+
   <group if="$(arg mocha)">
     <include file="$(find mocha_launch)/launch/basestation.launch">
       <arg name="robot_name" value="basestation"/>

@@ -1,6 +1,7 @@
 import requests
 
 import os
+import json
 from dotenv import load_dotenv
 import ast
 import rospy
@@ -225,6 +226,9 @@ def report_new_casualty(id, lat, long, time):
 
     r = requests.post(f"{BASE_URL}/api/initial_report", headers=headers, json=payload)
     print(r.status_code, r.json())
+
+def parse_report_string_as_json(report_str):
+    return json.loads(report_str)
 
 def parse_report_string(report_str):
   #time_now = rospy.Time.now().secs

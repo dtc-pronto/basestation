@@ -1,8 +1,8 @@
 [
   {
     "id": 0,
-    "lat": 0.0,
-    "lon": 0.0,
+    "lat": 40.0427883,
+    "lon": -75.2853434,
     "report": {
       "hr": {
         "value": 0,
@@ -44,17 +44,17 @@
       "team": "PennPronto",
       "system": "deimos",
       "location": {
-        "latitude": 0.0,
-        "longitude": 0.0,
+        "latitude": 40.0427883,
+        "longitude": -75.2853434,
         "time_ago": 0
       }
     },
-    "image_path": "/home/dtc/ws/data/casualty_images/deimos_image_1758663668.jpg"
+    "image_path": null
   },
   {
     "id": 1,
-    "lat": 0.0,
-    "lon": 0.0,
+    "lat": 40.042738799999995,
+    "lon": -75.2853348,
     "report": {
       "hr": {
         "value": 0,
@@ -96,63 +96,11 @@
       "team": "PennPronto",
       "system": "deimos",
       "location": {
-        "latitude": 0.0,
-        "longitude": 0.0,
+        "latitude": 40.042738799999995,
+        "longitude": -75.2853348,
         "time_ago": 0
       }
     },
-    "image_path": "/home/dtc/ws/data/casualty_images/deimos_image_1758663668.jpg"
-  },
-  {
-    "id": 2,
-    "lat": 0.0,
-    "lon": 0.0,
-    "report": {
-      "hr": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "rr": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "alertness_ocular": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "alertness_verbal": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "alertness_motor": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "severe_hemorrhage": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "respiratory_distress": {
-        "value": 0,
-        "time_ago": 0
-      },
-      "trauma_head": 0,
-      "trauma_torso": 0,
-      "trauma_lower_ext": 0,
-      "trauma_upper_ext": 0,
-      "temp": {
-        "value": 98,
-        "time_ago": 0
-      },
-      "casualty_id": 3,
-      "team": "PennPronto",
-      "system": "deimos",
-      "location": {
-        "latitude": 0.0,
-        "longitude": 0.0,
-        "time_ago": 0
-      }
-    },
-    "image_path": "/home/dtc/ws/data/casualty_images/deimos_image_1758663668.jpg"
+    "image_path": "/home/dtc/ws/data/casualty_images/deimos_image_1758675566.jpg"
   }
 ]
