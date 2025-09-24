@@ -38,9 +38,10 @@ def gps_distance(lat1, lon1, lat2, lon2):
     Compute Euclidean distance (in meters) between two GPS coordinates
     using UTM projection.
     """
+
     x1, y1, zone1, letter1 = utm.from_latlon(lat1, lon1)
     x2, y2, zone2, letter2 = utm.from_latlon(lat2, lon2)
-    
+   
     # Ensure both points are in the same UTM zone
     if (zone1, letter1) != (zone2, letter2):
         raise ValueError("Points are in different UTM zones, can't use simple Euclidean distance")
@@ -74,12 +75,12 @@ def closest_casualty(report, casualty_list):
                 
     return closest_casualty, min_distance, idx, payload
 
-def update_drone_casualty_db(ugv_uav_threshold=7):
+def update_drone_casualty_db(db_path, ugv_uav_threshold=7):
     print("UPDATING DRONE CASUALTY DB")
-    with open("/home/dtc/ws/data/casualty_db/uav_casualty_list.json", "r") as f:
+    with open(os.path.join(db_path, "uav_casualty_list.json"), "r") as f:
         uav_db = json.load(f)
 
-    with open("/home/dtc/ws/data/casualty_db/matching_table.json", "r") as f:
+    with open(os.path.join(db_path, "matching_table.json"), "r") as f:
         matching_table = json.load(f)
 
     #first see this is a casualty the drone has seen before, but not the jackal
@@ -123,7 +124,7 @@ def update_drone_casualty_db(ugv_uav_threshold=7):
             print(new_entry)
             matching_table.append(new_entry)
 
-    with open("/home/dtc/ws/data/casualty_db/matching_table.json", "w") as f:
+    with open(os.path.join(db_path, "matching_table.json"), "w") as f:
         json.dump(matching_table, f, indent=2)
 
 

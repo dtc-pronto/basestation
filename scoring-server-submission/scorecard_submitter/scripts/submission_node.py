@@ -87,8 +87,8 @@ class SubmissionNode:
         with open(self.matching_table, "w") as f:
             json.dump([], f)
 
-        robots = rospy.get_param("/robots")
-
+        robots = rospy.get_param("/robots") 
+        self.mutex = threading.Lock()
         #Subscribe to scorecard_topic
         # TODO deprecate these topics
         #self.deimos_report_sub = rospy.Subscriber("/deimos/report_status", String, self.deimosScoreCallback) #changed atm
@@ -127,10 +127,11 @@ class SubmissionNode:
             new_casualty["lon"] = elt.location.longitude
             self.drone_casualty_dict_list.append(new_casualty)
 
+        self.mutex.acquire()
         with open(self.drone_db, "w") as f:
             json.dump(self.drone_casualty_dict_list, f, indent=2)
-        
-        update_drone_casualty_db(self.config["ugv_uav_distance_threshold"])
+    
+        update_drone_casualty_db(self.db_path, self.config["ugv_uav_distance_threshold"])
 
         with open(self.matching_table, "r") as f:
             matching_table = json.load(f)
@@ -139,9 +140,11 @@ class SubmissionNode:
             if elt["action"] == "init" and not(elt["pos_sent"]):
                 init_position(id=elt["casualty_id"], lat=elt["uav"]["lat"], lon=elt["uav"]["lon"], time=elt["timestamp"])
                 elt["action"] = ""
-                elt["pos_sent"] = True                
+                elt["pos_sent"] = True
+        
         with open(self.matching_table, "w") as f:
             json.dump(matching_table, f, indent=2)
+        self.mutex.release()
 
         total_posts()
 
@@ -154,25 +157,33 @@ class SubmissionNode:
         report = parse_report_string_as_json(msg.scorecard.data)
         image = self.compressedImageMsgToArray(msg.image)
 
+        self.mutex.acquire()
         self.writeJackalReport("deimos", report, image)
+        self.mutex.release()
 
     def phobosCallback(self, msg : ScoreCardString) -> None: 
-        report = parse_report_string(msg.scorecard.data)
+        report = parse_report_string_as_json(msg.scorecard.data)
         image = self.compressedImageMsgToArray(msg.image)
-
+        
+        self.mutex.acquire()
         self.writeJackalReport("phobos", report, image)
+        self.mutex.release()
 
     def titaniaCallback(self, msg : ScoreCardString) -> None: 
-        report = parse_report_string(msg.scorecard.data)
+        report = parse_report_string_as_json(msg.scorecard.data)
         image = self.compressedImageMsgToArray(msg.image)
 
+        self.mutex.acquire()
         self.writeJackalReport("titania", report, image)
+        self.mutex.release()
 
     def oberonCallback(self, msg : ScoreCardString) -> None: 
-        report = parse_report_string(msg.scorecard.data)
+        report = parse_report_string_as_json(msg.scorecard.data)
         image = self.compressedImageMsgToArray(msg.image)
 
+        self.mutex.acquire()
         self.writeJackalReport("oberon", report, image)
+        self.mutex.release()
     
     def writeJackalReport(self, robot : str, report : str, image : np.ndarray) -> None:
 
@@ -230,7 +241,7 @@ class SubmissionNode:
                 "whoami": None,
                 "image_path": None}
 
-    def initFalonEntry(self) -> Dict:
+    def initFalconEntry(self) -> Dict:
         return {"id": None,
                 "lat": None,
                 "lon": None}

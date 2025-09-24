@@ -13,7 +13,7 @@ total_update = 0
 def submit_image(image_path, time, id):
     # Load .env file
     load_dotenv()
-
+    print("Submitting Image")
     TOKEN = os.getenv("TOKEN")
     BASE_URL = os.getenv("BASE_URL")
 
@@ -215,8 +215,8 @@ def report_new_casualty(id, lat, long, time):
         "time_ago":  max(time - rospy.Time.now().secs, 0),
       },
       "casualty_id": id,
-      "team": "PennPRONTO",
-      "system": "JackalNVILA",
+      "team": payload["system"],
+      "system": payload["system"],
       "location": {
         "latitude": lat,
         "longitude": long,
