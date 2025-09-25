@@ -35,7 +35,7 @@ def submit_image(image_path, time, id):
 
     r = requests.post(f"{BASE_URL}/api/casualty_image", headers=headers, files=files, data=data)
     print(r.status_code, r.json())
-    return r.json().get("image_id", None)
+    return r
 
 
 def convert_to_enum(value):
@@ -102,6 +102,7 @@ def update_casualty(id, payload):
                  
     r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
     print(r.status_code, r.json())
+    return r
 
 def init_position(id, lat, lon, time):
     global total_init_pos

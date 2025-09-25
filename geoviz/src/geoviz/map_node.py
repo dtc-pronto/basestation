@@ -7,7 +7,7 @@
 import utm
 import rospy
 from sensor_msgs.msg import NavSatFix
-from dtc_msgs.msg import NavSatFixArray, JackalStatus, FalconStatus
+from dtc_msgs.msg import CasualtyFix, JackalStatus, FalconStatus
 
 from geoviz.map_app import MapApp
 
@@ -27,7 +27,7 @@ class MapNode:
         self.app_ = MapApp(path, ip = ip, port = port)
         self.app_.run_in_thread()
 
-        robots = rospy.get_param("/geoviz/app/robots")
+        robots = rospy.get_param("/robots")
 
         if "phobos" in robots:
             rospy.Subscriber("/phobos/ublox/fix", NavSatFix, self.phobos_callback)
@@ -42,14 +42,11 @@ class MapNode:
             rospy.Subscriber("/titania/ublox/fix", NavSatFix, self.titania_callback)
             rospy.Subscriber("/titania/status", JackalStatus, self.titania_health_callback)
         if "dione" in robots:
-            rospy.Subscriber("/dione/mavros/global_position/fix/raw", NavSatFix, self.dione_callback)
+            rospy.Subscriber("/dione/mavros/global_position/raw/fix", NavSatFix, self.dione_callback)
             rospy.Subscriber("/dione/status", FalconStatus, self.dione_health_callback)
 
-        print("[VISUALIZER] Using NavSatFixArray: ", use_array)
-        if not use_array:
-            rospy.Subscriber("/dione/casualty", NavSatFix, self.casualty_callback)
-        else:
-            rospy.Subscriber("dione/casualty", NavSatFixArray, self.casualty_array_callback)
+        rospy.Subscriber("/basestation/scoring_server_report", ServerReport, self.sever_callback)
+        rospy.Subscriber("/basestation/initial_report", InitialReport, self.initial_report_callback)
         
         print("[VISUALIZER] starting visualizer with robots: ", robots)
 
@@ -88,9 +85,9 @@ class MapNode:
         status = {"robot_name": "dione", "rgb": msg.rgb, "thermal": msg.thermal, "gps": msg.gps, "rtk":msg.rtk}
         self.app_.update_status(status)
 
-    def casualty_callback(self, msg : NavSatFix) -> None: 
-        self.app_.update_casualty(msg.latitude, msg.longitude, msg.header.seq)
+    def server_callback(self, msg : ServerReport) -> None: 
+        data = {"code": msg.code, "status": msg.report.data, "robot_name": msg.robot.data}
+        self.app_.update_server_report(data)
 
-    def casualty_array_callback(self, msg : NavSatFixArray) -> None:
-        for coord in msg.coordinates:
-            self.app_.update_casualty(coord.latitude, coord.longitude, coord.header.seq)
+    def initial_report_callback(self, msg : InitialReport) -> None:
+        pass

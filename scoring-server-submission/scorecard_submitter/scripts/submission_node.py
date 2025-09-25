@@ -213,7 +213,7 @@ class SubmissionNode:
         if r is not None:
             self.publishServerReport(r, "oberon")
     
-    def writeJackalReport(self, robot : str, report : str, image : np.ndarray) -> None:
+    def writeJackalReport(self, robot : str, report : str, image : np.ndarray):
 
         r = None
         new_jackal_entry = self.initJackalEntry()
