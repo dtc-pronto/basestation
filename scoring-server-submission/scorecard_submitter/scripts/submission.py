@@ -76,6 +76,7 @@ def start_run():
     
     response = requests.get(url, headers=headers)
     print(response.status_code, r.json())
+    return r
 
 def update_casualty(id, payload):
     global total_update
@@ -131,6 +132,7 @@ def init_position(id, lat, lon, time):
 
     r = requests.post(f"{BASE_URL}/api/initial_report", headers=headers, json=payload)
     print(r.status_code, r.json())
+    return r
 
 def init_supplement(id, payload):
     global total_init_supp
@@ -158,6 +160,7 @@ def init_supplement(id, payload):
                  
     r = requests.post(f"{BASE_URL}/api/initial_report", headers=headers, json=payload)
     print(r.status_code, r.json())
+    return r
 
 def total_posts():
     global total_init_pos, total_init_supp, total_update
@@ -226,6 +229,7 @@ def report_new_casualty(id, lat, long, time):
 
     r = requests.post(f"{BASE_URL}/api/initial_report", headers=headers, json=payload)
     print(r.status_code, r.json())
+    return r
 
 def parse_report_string_as_json(report_str):
     return json.loads(report_str)

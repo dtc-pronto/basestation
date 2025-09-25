@@ -55,10 +55,12 @@ RUN sudo apt-get update && sudo apt-get install -y ros-noetic-vision-opencv \
 COPY common/MOCHA/ ws/src/MOCHA/
 COPY common/dtc_msgs ws/src/dtc_msgs
 COPY common/rtk-correction ws/src/rtk-correction
+COPY common/spoof-debugger ws/src/spoofer
 COPY scoring-server-submission/watchstate ws/src/MOCHA/interface_rajant/scripts/thirdParty/watchstate
 COPY scoring-server-submission/scorecard_submitter ws/src/scorecard_submitter
 COPY geoviz/ ws/src/geoviz
 COPY basestation-launch ws/src/basestation-launch
+COPY basestation-msgs ws/src/basestation-msgs
 COPY ./entrypoint.bash entrypoint.bash
 RUN sudo chown $USER:$USER entrypoint.bash && chmod +x entrypoint.bash
 
