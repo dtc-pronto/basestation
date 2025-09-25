@@ -27,15 +27,16 @@ from helpers import gps_distance
 
     DTC PRONTO 2025
 """
-
+import cv2
 import rospy
 import numpy as np
-from submission import start_run, submit_image, report_new_casualty, update_casualty, init_position, init_supplement, total_posts, parse_report_string_as_json
+from submission import start_run, submit_image, update_casualty, init_position, init_supplement, total_posts, parse_report_string_as_json
 from helpers import gps_distance, closest_casualty, update_drone_casualty_db, update_jackal_casualty_db, parse_report_string
 
 from std_msgs.msg import Bool, String, UInt8, Float32
 from dtc_msgs.msg import ScoreCard, CasualtyFixArray, CasualtyFix, ScoreCardString
 from sensor_msgs.msg import Image, CompressedImage, NavSatFix
+from basestation_msgs.msg import ServerReport, InitialReport, FullReport
 from cv_bridge import CvBridge
 import cv2
 import json
@@ -89,12 +90,6 @@ class SubmissionNode:
 
         robots = rospy.get_param("/robots") 
         self.mutex = threading.Lock()
-        #Subscribe to scorecard_topic
-        # TODO deprecate these topics
-        #self.deimos_report_sub = rospy.Subscriber("/deimos/report_status", String, self.deimosScoreCallback) #changed atm
-        #self.deimos_image_sub = rospy.Subscriber("/deimos/processed_image", Image, self.deimosImageCallback)
-        #self.deimos_report_sub = rospy.Subscriber("/phobos/report_status", String, self.phobosScoreCallback)
-        #self.deimos_image_sub = rospy.Subscriber("/phobos/process_image", Image, self.phobosImageCallback)
 
         if "deimos" in robots:
             rospy.loginfo("[SENDER] Adding Deimos to submission")
@@ -110,7 +105,11 @@ class SubmissionNode:
             self.oberon_sub = rospy.Subscriber("/oberon/report_status", ScoreCardString, self.oberonCallback)
         if "dione" in robots:
             rospy.loginfo("[SENDER] Adding Dione to submission")
-            self.dione_position_sub = rospy.Subscriber("dione/casualty_info", CasualtyFixArray, self.casualtyPosCallback)
+            self.dione_position_sub = rospy.Subscriber("/dione/casualty_info", CasualtyFixArray, self.casualtyPosCallback)
+
+        self.server_pub_ = rospy.Publisher("/basestation/scoring_server_report", ServerReport, queue_size=10)
+        self.initial_pub_ = rospy.Publisher("/basestation/initial_report", InitialReport, queue_size=10)
+        self.full_report_pub_ = rospy.Publisher("/basestation/full_report", FullReport, queue_size=5)
 
         self.drone_casualty_dict_list = []
         self.jackal_casualty_dict_list = []
@@ -118,6 +117,7 @@ class SubmissionNode:
     def casualtyPosCallback(self, msg : CasualtyFixArray) -> None:
         #print(len(msg.casualties))
         #print(len(self.casualty_dict_list))
+        r = None
         self.drone_casualty_dict_list = []
 
         for elt in msg.casualties:
@@ -138,15 +138,35 @@ class SubmissionNode:
         
         for elt in matching_table:
             if elt["action"] == "init" and not(elt["pos_sent"]):
-                init_position(id=elt["casualty_id"], lat=elt["uav"]["lat"], lon=elt["uav"]["lon"], time=elt["timestamp"])
+                r = init_position(id=elt["casualty_id"], lat=elt["uav"]["lat"], lon=elt["uav"]["lon"], time=elt["timestamp"])
                 elt["action"] = ""
                 elt["pos_sent"] = True
-        
+                self.publishInitialReport(elt["casualty_id"], elt["uav"]["lat"], elt["uav"]["lon"], elt["timestamp"])
+
         with open(self.matching_table, "w") as f:
             json.dump(matching_table, f, indent=2)
         self.mutex.release()
-
         total_posts()
+        if r is not None:
+            self.publishServerReport(r, "dione")
+
+    def publishServerReport(self, r, robot : str) -> None:
+        msg = ServerReport()
+        msg.header.stamp = rospy.Time.now()
+        msg.code = r.status_code
+        msg.report.data = json.dumps(r.json())
+        msg.robot.data = robot
+
+        self.server_pub_.publish(msg)
+
+    def publishInitialReport(self, cid : int, lat : float, lon : float, time : float) -> None:
+        msg = InitialReport()
+        msg.casualty_id = cid
+        msg.latitude = lat 
+        msg.longitude = lon
+        msg.time_ago= time
+
+        self.initial_pub_.publish(msg)
 
     def compressedImageMsgToArray(self, msg : CompressedImage) -> np.ndarray:
         np_arr = np.frombuffer(msg.data, np.uint8)
@@ -158,35 +178,44 @@ class SubmissionNode:
         image = self.compressedImageMsgToArray(msg.image)
 
         self.mutex.acquire()
-        self.writeJackalReport("deimos", report, image)
+        r = self.writeJackalReport("deimos", report, image)
         self.mutex.release()
+        if r is not None:
+            self.publishServerReport(r, "deimos")
 
     def phobosCallback(self, msg : ScoreCardString) -> None: 
         report = parse_report_string_as_json(msg.scorecard.data)
         image = self.compressedImageMsgToArray(msg.image)
         
         self.mutex.acquire()
-        self.writeJackalReport("phobos", report, image)
+        r = self.writeJackalReport("phobos", report, image)
         self.mutex.release()
+        if r is not None:
+            self.publishServerReport(r, "phobos")
 
     def titaniaCallback(self, msg : ScoreCardString) -> None: 
         report = parse_report_string_as_json(msg.scorecard.data)
         image = self.compressedImageMsgToArray(msg.image)
 
         self.mutex.acquire()
-        self.writeJackalReport("titania", report, image)
+        r = self.writeJackalReport("titania", report, image)
         self.mutex.release()
+        if r is not None:
+            self.publishServerReport(r, "titania")
 
     def oberonCallback(self, msg : ScoreCardString) -> None: 
         report = parse_report_string_as_json(msg.scorecard.data)
         image = self.compressedImageMsgToArray(msg.image)
 
         self.mutex.acquire()
-        self.writeJackalReport("oberon", report, image)
+        r = self.writeJackalReport("oberon", report, image)
         self.mutex.release()
+        if r is not None:
+            self.publishServerReport(r, "oberon")
     
     def writeJackalReport(self, robot : str, report : str, image : np.ndarray) -> None:
 
+        r = None
         new_jackal_entry = self.initJackalEntry()
         new_jackal_entry["id"] = len(self.jackal_casualty_dict_list)
         new_jackal_entry["lat"] = report["location"]["latitude"]
@@ -211,11 +240,9 @@ class SubmissionNode:
             if elt["action"] == "init_update":
                 init_supplement(elt["casualty_id"], elt["report"])
                 elt["image_path"] = new_jackal_entry["image_path"]
-                #try:
+                self.publishFullReport(elt["casualty_id"], elt["report"], elt["image_path"]) 
                 if elt["image_path"] is not None:
-                    submit_image(elt["image_path"],elt["report"]["severe_hemorrhage"]["time_ago"], elt["casualty_id"])
-                #except:
-                #    print("[Scorecard][ERROR] Failed to submit image")
+                    r = submit_image(elt["image_path"],elt["report"]["severe_hemorrhage"]["time_ago"], elt["casualty_id"])
                 elt["action"] = ""
                 elt["pos_sent"] = True
                 elt["init_supp_sent"] = True
@@ -224,14 +251,24 @@ class SubmissionNode:
                 if elt["update_sent"]:
                     print("[Scorecard][STATUS] Two Jackals have already triaged this. Update already sent for casualty_id ", elt["casualty_id"])
                 else:
-                    update_casualty(elt["casualty_id"], elt["report"])
+                    r = update_casualty(elt["casualty_id"], elt["report"])
                     elt["action"] = ""                
                     elt["update_sent"] = True
         with open(self.matching_table, "w") as f:
-            json.dump(matching_table, f, indent=2)
-
+            json.dump(matching_table, f, indent=2)  
         total_posts()
+        return r
         
+
+    def publishFullReport(self, cid : int, report : str, image_path : str) -> None:
+        msg = FullReport()
+        msg.casualty_id = cid
+        msg.report.data = json.dumps(report)
+        img = cv2.imread(image_path)
+        cimg = self.createCompressedImageMsg(img)
+        msg.image = cimg
+
+        self.full_report_pub_.publish(msg)
 
     def initJackalEntry(self) -> Dict:
         return {"id": None,
@@ -246,7 +283,20 @@ class SubmissionNode:
                 "lat": None,
                 "lon": None}
 
-
+    def createCompressedImageMsg(self, image : np.ndarray ) -> CompressedImage:
+        compressed_img = CompressedImage()
+        compressed_img.header.stamp = rospy.Time.now()
+        compressed_img.header.frame_id = "camera_frame"
+        
+        # Set format
+        compressed_img.format = 'jpg'
+        
+        encode_params = [cv2.IMWRITE_JPEG_QUALITY, 90]
+        _, compressed_data = cv2.imencode('.jpg', image, encode_params)
+        
+        compressed_img.data = compressed_data.tobytes()
+        
+        return compressed_img
 
     """
     def deimosImageCallback(self, msg):

@@ -45,7 +45,6 @@ def gps_distance(lat1, lon1, lat2, lon2):
     # Ensure both points are in the same UTM zone
     if (zone1, letter1) != (zone2, letter2):
         raise ValueError("Points are in different UTM zones, can't use simple Euclidean distance")
-    
     return math.hypot(x2 - x1, y2 - y1)
 
 def closest_casualty(report, casualty_list):
