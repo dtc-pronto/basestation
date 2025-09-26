@@ -83,7 +83,7 @@ class MapNode:
         self.app_.update_falcon(msg.latitude, msg.longitude, "dione")
 
     def dione_health_callback(self, msg : FalconStatus) -> None:
-        status = {"robot_name": "dione", "rgb": msg.rgb, "thermal": msg.thermal, "rtk":msg.rtk, "jeti":msg.jeti, "ouster":msg.ouster, "mic":msg.mic}
+        status = {"robot_name": "dione", "rgb": msg.rgb, "thermal": msg.thermal, "gps":msg.gps, "rtk":msg.rtk}
         self.app_.update_status(status)
 
     def server_callback(self, msg : ServerReport) -> None: 
