@@ -78,7 +78,7 @@ class MapApp:
         self.socketio_.emit('health_update', health_data)
 
     def update_server_report(self, server_data : Dict) -> None:
-        self.socketio_.emit('server_update', server_data)
+        self.socketio_.emit('server_report', server_data)
 
     def run_in_thread(self) -> None:
         thread = Thread(target=self.run)

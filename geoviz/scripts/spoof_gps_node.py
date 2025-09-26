@@ -14,7 +14,7 @@ import random
 from rospy.timer import TimerEvent
 from sensor_msgs.msg import NavSatFix
 from dtc_msgs.msg import NavSatFixArray
-
+from basestation_msgs.msg import InitialReport
 NUM_CASUALTIES = 10
 
 class Spoofer:
@@ -37,14 +37,10 @@ class Spoofer:
         self.deimos_pub_ = rospy.Publisher("/deimos/ublox/fix", NavSatFix, queue_size=10)
         self.oberon_pub_ = rospy.Publisher("/oberon/ublox/fix", NavSatFix, queue_size=10)
         self.titania_pub_ = rospy.Publisher("/titania/ublox/fix", NavSatFix, queue_size=10)
-        self.dione_pub_ = rospy.Publisher("/dione/mavros/global_position/fix/raw", NavSatFix, queue_size=10)
+        self.dione_pub_ = rospy.Publisher("/dione/mavros/global_position/raw/fix", NavSatFix, queue_size=10)
 
         print("[SPOOFER] Using NavSatFixArray: ", self.use_array_)
-        if not self.use_array_:
-            self.cas_pub_ = rospy.Publisher("/dione/casualty", NavSatFix, queue_size=10)
-        else:
-            self.casualties_ = list()
-            self.cas_pub_ = rospy.Publisher("/dione/casualty", NavSatFixArray, queue_size=1)
+        self.cas_pub_ = rospy.Publisher("/basestation/initial_report", InitialReport, queue_size=10)
 
         rospy.Timer(rospy.Duration(2.0), self.phobos_callback)
         rospy.Timer(rospy.Duration(2.0), self.deimos_callback)
@@ -128,20 +124,12 @@ class Spoofer:
 
             lat, lon = utm.to_latlon(easting, northing, self.zone_int_, self.zone_str_)
 
-            msg = NavSatFix()
+            msg = InitialReport()
             msg.latitude = lat
             msg.longitude = lon
-            msg.header.seq = self.casualty_
-            msg.header.frame_id = f"casualty {self.casualty_}"
+            msg.casualty_id = self.casualty_
         
-            if not self.use_array_:
-                self.cas_pub_.publish(msg)
-            else:
-                self.casualties_.append(msg)
-                msg_array = NavSatFixArray()
-                msg_array.coordinates = self.casualties_
-                self.cas_pub_.publish(msg_array)
-
+            self.cas_pub_.publish(msg)
             self.casualty_ += 1
 
 

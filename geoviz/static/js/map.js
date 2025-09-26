@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Try different tile providers - one of these should work
     // 1. Mapbox Satellite
     var mapboxDetailed = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-        attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a>',
+        attribution: 'Â© <a href="https://www.mapbox.com/about/maps/">Mapbox</a>',
         maxZoom: 30,
         id: 'mapbox/satellite-v9',
         accessToken: window.MAPBOX_TOKEN 
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 2. OpenStreetMap as fallback
     var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '© OpenStreetMap contributors'
+        attribution: 'Â© OpenStreetMap contributors'
     });
 
     var baseLayers = {
@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var droneMarker = null; // Store current drone marker
     var casualtyMarkers = {}; // Store casualty markers (persistent)
     var robotHealthData = {}; // Store health data for each robot
+    var serverReports = []; // Store server reports
     
     var jackalColors = {
         'phobos': '#28B463',    // Green for Phobos
@@ -235,6 +236,173 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(`Updated health status for ${robotName}:`, healthData);
     }
 
+    // Function to handle server report updates
+    function handleServerReport(reportData) {
+        console.log('Received server report:', reportData);
+        
+        // Add timestamp to the report
+        reportData.timestamp = new Date().toLocaleTimeString();
+        
+        // Add to reports array (keep last 50 reports)
+        serverReports.unshift(reportData);
+        if (serverReports.length > 50) {
+            serverReports = serverReports.slice(0, 50);
+        }
+        
+        // Update the server reports display
+        updateServerReportsDisplay();
+        
+        // Show notification popup if serious error code
+        if (reportData.code && (reportData.code >= 400 || reportData.code < 200)) {
+            showServerReportNotification(reportData);
+        }
+    }
+
+    // Function to update server reports display
+    function updateServerReportsDisplay() {
+        var container = document.getElementById('health-status-container');
+        var reportsSection = document.getElementById('server-reports-section');
+        
+        if (!reportsSection) {
+            // Create server reports section
+            var reportsSectionHtml = `
+                <div id="server-reports-section" style="margin-top: 20px;">
+                    <div class="panel-header" style="font-size: 14px; margin-bottom: 10px;">
+                        Server Reports
+                        <button id="toggle-reports" style="float: right; background: #34495e; color: white; border: none; padding: 2px 8px; border-radius: 3px; font-size: 10px; cursor: pointer;">Hide</button>
+                    </div>
+                    <div id="server-reports-container" style="max-height: 200px; overflow-y: auto;">
+                        <!-- Reports will be added here -->
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', reportsSectionHtml);
+            
+            // Add toggle functionality
+            document.getElementById('toggle-reports').addEventListener('click', function() {
+                var reportsContainer = document.getElementById('server-reports-container');
+                var toggleBtn = document.getElementById('toggle-reports');
+                if (reportsContainer.style.display === 'none') {
+                    reportsContainer.style.display = 'block';
+                    toggleBtn.textContent = 'Hide';
+                } else {
+                    reportsContainer.style.display = 'none';
+                    toggleBtn.textContent = 'Show';
+                }
+            });
+        }
+        
+        // Update reports container
+        var reportsContainer = document.getElementById('server-reports-container');
+        var reportsHtml = '';
+        
+        serverReports.slice(0, 10).forEach(function(report) { // Show last 10 reports
+            var statusColor = getReportStatusColor(report.code);
+            var robotColor = jackalColors[report.robot_name?.toLowerCase()] || droneColor;
+            
+            reportsHtml += `
+                <div class="server-report-item" style="
+                    background-color: white;
+                    border-left: 4px solid ${statusColor};
+                    margin-bottom: 8px;
+                    padding: 8px;
+                    border-radius: 4px;
+                    font-size: 11px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="
+                            background-color: ${robotColor};
+                            color: white;
+                            padding: 2px 6px;
+                            border-radius: 3px;
+                            font-weight: bold;
+                            font-size: 9px;
+                        ">${report.robot_name?.toUpperCase() || 'UNKNOWN'}</span>
+                        <span style="
+                            background-color: ${statusColor};
+                            color: white;
+                            padding: 2px 6px;
+                            border-radius: 3px;
+                            font-weight: bold;
+                            font-size: 9px;
+                        ">CODE ${report.code || 'N/A'}</span>
+                    </div>
+                    <div style="color: #2c3e50; margin-bottom: 2px; font-weight: bold;">
+                        ${report.message || 'No message'}
+                    </div>
+                    <div style="color: #7f8c8d; font-size: 9px;">
+                        ${report.timestamp}
+                    </div>
+                </div>
+            `;
+        });
+        
+        if (reportsHtml === '') {
+            reportsHtml = '<div style="text-align: center; color: #7f8c8d; font-style: italic; padding: 20px;">No server reports yet</div>';
+        }
+        
+        reportsContainer.innerHTML = reportsHtml;
+    }
+
+    // Function to get status color based on code
+    function getReportStatusColor(code) {
+        if (!code) return '#95a5a6'; // Gray for unknown
+        
+        if (code >= 200 && code < 300) return '#27ae60'; // Green for success
+        if (code >= 300 && code < 400) return '#f39c12'; // Orange for redirect
+        if (code >= 400 && code < 500) return '#e74c3c'; // Red for client error
+        if (code >= 500) return '#8e44ad'; // Purple for server error
+        
+        return '#3498db'; // Blue for info
+    }
+
+    // Function to show notification for important server reports
+    function showServerReportNotification(reportData) {
+        // Create or update notification
+        var notification = document.getElementById('server-report-notification');
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.id = 'server-report-notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #e74c3c;
+                color: white;
+                padding: 15px;
+                border-radius: 5px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                z-index: 1000;
+                max-width: 300px;
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                transition: all 0.3s ease;
+            `;
+            document.body.appendChild(notification);
+        }
+        
+        notification.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 5px;">
+                ${reportData.robot_name?.toUpperCase() || 'ROBOT'} ERROR (${reportData.code})
+            </div>
+            <div>${reportData.message || 'No message'}</div>
+            <div style="margin-top: 8px; text-align: right;">
+                <button onclick="document.getElementById('server-report-notification').remove()" 
+                        style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 3px 8px; border-radius: 3px; cursor: pointer;">
+                    Dismiss
+                </button>
+            </div>
+        `;
+        
+        // Auto-remove after 10 seconds
+        setTimeout(function() {
+            if (notification && notification.parentNode) {
+                notification.remove();
+            }
+        }, 10000);
+    }
+
     // Create a legend
     var legend = L.control({position: 'bottomright'});
 
@@ -390,6 +558,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Handle server report updates
+    socket.on('server_report', function(data) {
+        console.log('Received server report:', data);
+        
+        if (data && typeof data === 'object') {
+            handleServerReport(data);
+        } else {
+            console.error('Invalid server report data:', data);
+        }
+    });
+
     // Add layer control for toggling markers only
     var overlayLayers = {
         "Robot Markers": objectsLayer,
@@ -432,6 +611,14 @@ document.addEventListener('DOMContentLoaded', function() {
         updateRobotHealth(healthData);
     };
 
+    window.addTestServerReport = function(robotName, code, message) {
+        robotName = robotName || 'phobos';
+        code = code || 200;
+        message = message || 'Test server report message';
+        var reportData = {robot_name: robotName, code: code, message: message};
+        handleServerReport(reportData);
+    };
+
     window.clearAllCasualties = function() {
         Object.keys(casualtyMarkers).forEach(function(casualtyId) {
             objectsLayer.removeLayer(casualtyMarkers[casualtyId]);
@@ -440,5 +627,11 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Cleared all casualties');
     };
 
-    console.log('Map.js loaded successfully. Use addTestJackal(), addTestDrone(), addTestCasualty(), or addTestHealth() to test.');
+    window.clearServerReports = function() {
+        serverReports = [];
+        updateServerReportsDisplay();
+        console.log('Cleared all server reports');
+    };
+
+    console.log('Map.js loaded successfully. Use addTestJackal(), addTestDrone(), addTestCasualty(), addTestHealth(), or addTestServerReport() to test.');
 });
