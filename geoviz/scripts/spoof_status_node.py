@@ -41,7 +41,7 @@ class StatusSpoofer:
         msg.gps = self.dist_[random.randint(0,9)]
         msg.rtk = self.dist_[random.randint(0,9)]
         msg.jeti = self.dist_[random.randint(0,9)]
-        msg.outser = self.dist_[random.randint(0,9)]
+        msg.ouster = self.dist_[random.randint(0,9)]
         msg.mic = self.dist_[random.randint(0,9)]
         return msg
     
