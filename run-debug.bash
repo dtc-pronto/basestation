@@ -9,6 +9,7 @@ docker run -it --rm \
     -v "/tmp/.X11-unix:/tmp/.X11-unix" \
     -v "./common/config:/home/`whoami`/ws/src/MOCHA/mocha_core/config" \
     -v "./scoring-server-submission/scorecard_submitter:/home/`whoami`/ws/src/scorecard_submitter" \
+    -v "./geoviz:/home/`whoami`/ws/src/geoviz" \
     -v "./data:/home/`whoami`/ws/data" \
     -e DISPLAY=$DISPLAY \
     -e QT_X11_NO_MITSHM=1 \

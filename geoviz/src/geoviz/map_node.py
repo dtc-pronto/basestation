@@ -7,7 +7,8 @@
 import utm
 import rospy
 from sensor_msgs.msg import NavSatFix
-from dtc_msgs.msg import NavSatFixArray, JackalStatus, FalconStatus
+from dtc_msgs.msg import CasualtyFix, JackalStatus, FalconStatus
+from basestation_msgs.msg import ServerReport, InitialReport
 
 from geoviz.map_app import MapApp
 
@@ -27,7 +28,7 @@ class MapNode:
         self.app_ = MapApp(path, ip = ip, port = port)
         self.app_.run_in_thread()
 
-        robots = rospy.get_param("/geoviz/app/robots")
+        robots = rospy.get_param("/robots")
 
         if "phobos" in robots:
             rospy.Subscriber("/phobos/ublox/fix", NavSatFix, self.phobos_callback)
@@ -42,14 +43,11 @@ class MapNode:
             rospy.Subscriber("/titania/ublox/fix", NavSatFix, self.titania_callback)
             rospy.Subscriber("/titania/status", JackalStatus, self.titania_health_callback)
         if "dione" in robots:
-            rospy.Subscriber("/dione/mavros/global_position/fix/raw", NavSatFix, self.dione_callback)
+            rospy.Subscriber("/dione/mavros/global_position/raw/fix", NavSatFix, self.dione_callback)
             rospy.Subscriber("/dione/status", FalconStatus, self.dione_health_callback)
 
-        print("[VISUALIZER] Using NavSatFixArray: ", use_array)
-        if not use_array:
-            rospy.Subscriber("/dione/casualty", NavSatFix, self.casualty_callback)
-        else:
-            rospy.Subscriber("dione/casualty", NavSatFixArray, self.casualty_array_callback)
+        rospy.Subscriber("/basestation/scoring_server_report", ServerReport, self.server_callback)
+        rospy.Subscriber("/basestation/initial_report", InitialReport, self.initial_report_callback)
         
         print("[VISUALIZER] starting visualizer with robots: ", robots)
 
@@ -57,40 +55,40 @@ class MapNode:
         self.app_.update_jackal(msg.latitude, msg.longitude, "phobos") 
     
     def phobos_health_callback(self, msg : JackalStatus) -> None:
-        status = {"robot_name": "phobos", "rgb": msg.rgb, "thermal": msg.thermal, "gps": msg.gps, "rtk":msg.rtk}
+        status = {"robot_name": "phobos", "rgb": msg.rgb, "thermal": msg.thermal, "rtk":msg.rtk, "jeti":msg.jeti, "ouster":msg.ouster, "mic":msg.mic}
         self.app_.update_status(status)
 
     def deimos_callback(self, msg : NavSatFix) -> None:
         self.app_.update_jackal(msg.latitude, msg.longitude, "deimos")
     
     def deimos_health_callback(self, msg : JackalStatus) -> None:
-        status = {"robot_name": "deimos", "rgb": msg.rgb, "thermal": msg.thermal, "gps": msg.gps, "rtk":msg.rtk}
+        status = {"robot_name": "deimos", "rgb": msg.rgb, "thermal": msg.thermal, "rtk":msg.rtk, "jeti":msg.jeti, "ouster":msg.ouster, "mic":msg.mic}
         self.app_.update_status(status)
 
     def oberon_callback(self, msg : NavSatFix) -> None:
         self.app_.update_jackal(msg.latitude, msg.longitude, "oberon")
     
     def oberon_health_callback(self, msg : JackalStatus) -> None:
-        status = {"robot_name": "oberon", "rgb": msg.rgb, "thermal": msg.thermal, "gps": msg.gps, "rtk":msg.rtk}
+        status = {"robot_name": "oberon", "rgb": msg.rgb, "thermal": msg.thermal, "rtk":msg.rtk, "jeti":msg.jeti, "ouster":msg.ouster, "mic":msg.mic}
         self.app_.update_status(status)
 
     def titania_callback(self, msg : NavSatFix) -> None: 
         self.app_.update_jackal(msg.latitude, msg.longitude, "titania")
     
     def titania_health_callback(self, msg : JackalStatus) -> None:
-        status = {"robot_name": "titania", "rgb": msg.rgb, "thermal": msg.thermal, "gps": msg.gps, "rtk":msg.rtk}
+        status = {"robot_name": "titania", "rgb": msg.rgb, "thermal": msg.thermal, "rtk":msg.rtk, "jeti":msg.jeti, "ouster":msg.ouster, "mic":msg.mic}
         self.app_.update_status(status)
 
     def dione_callback(self, msg : NavSatFix) -> None:
         self.app_.update_falcon(msg.latitude, msg.longitude, "dione")
 
     def dione_health_callback(self, msg : FalconStatus) -> None:
-        status = {"robot_name": "dione", "rgb": msg.rgb, "thermal": msg.thermal, "gps": msg.gps, "rtk":msg.rtk}
+        status = {"robot_name": "dione", "rgb": msg.rgb, "thermal": msg.thermal, "rtk":msg.rtk, "jeti":msg.jeti, "ouster":msg.ouster, "mic":msg.mic}
         self.app_.update_status(status)
 
-    def casualty_callback(self, msg : NavSatFix) -> None: 
-        self.app_.update_casualty(msg.latitude, msg.longitude, msg.header.seq)
+    def server_callback(self, msg : ServerReport) -> None: 
+        data = {"code": msg.code, "message": msg.report.data, "robot_name": msg.robot.data}
+        self.app_.update_server_report(data)
 
-    def casualty_array_callback(self, msg : NavSatFixArray) -> None:
-        for coord in msg.coordinates:
-            self.app_.update_casualty(coord.latitude, coord.longitude, coord.header.seq)
+    def initial_report_callback(self, msg : InitialReport) -> None:
+        self.app_.update_casualty(msg.latitude, msg.longitude, msg.casualty_id)
