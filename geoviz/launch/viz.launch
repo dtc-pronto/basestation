@@ -8,6 +8,7 @@
     <node pkg="geoviz" type="ros_node.py" name="geoviz" output="screen">
         <rosparam command="load" file="$(find geoviz)/config/map.yaml"/>
         <param name="path" value="$(find geoviz)"/>
+	<param name="tile_path" value="$(find geoviz)/tiles"/>
         <param name="app/ip_address" value="$(arg ip)"/>
         <param name="app/port" value="$(arg port)"/>
         <param name="gps" value="$(arg gps)"/>

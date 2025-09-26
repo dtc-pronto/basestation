@@ -7,7 +7,7 @@
 import os
 
 import folium
-from flask import Flask, render_template_string, render_template
+from flask import Flask, render_template_string, render_template, send_file, abort
 from flask_socketio import SocketIO
 from threading import Thread
 from dotenv import load_dotenv
@@ -16,21 +16,19 @@ from typing import Tuple, Dict
 
 class MapApp:
 
-    def __init__(self, path : str, ip : str = '127.0.0.1', port : int = 5000, starting_ll: Tuple[float] = (39.94136, -75.199492)) -> None:
+    def __init__(self, path : str, ip : str = '127.0.0.1', port : int = 5000, starting_ll: Tuple[float] = (39.94136, -75.199492), tile_path : str = None) -> None:
         print("[VISUALIZER] Starting viz on ip: %s:%i" %(ip, port))
         self.ip_ = ip
         self.port_ = port 
 
+        self.tiles_path = tile_path
+
         self.app_ = Flask(__name__, template_folder=path+'/templates', static_folder=path+'/static')
         self.socketio_ = SocketIO(self.app_, cors_allowed_origins="*")
         
-        self.map_ = folium.Map(location=starting_ll,
-                               zoom_start=24,
-                               tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                               attr='Esri',
-                               name='Esri Satellite')
-
         self.setup_routes()
+        self.setup_offline_routes()
+
         self.gps_points = list()
         self.odom_points = list()
         self.glins_points = list()
@@ -38,10 +36,22 @@ class MapApp:
         env_file_path = os.path.join(path, "env", "mapbox_token.env")
         load_dotenv(env_file_path)
 
+
+    def setup_offline_routes(self):
+        @self.app_.route('/tiles/<int:z>/<int:x>/<int:y>.png')
+        def serve_tile(z, x, y):
+            tile_path = os.path.join(self.tiles_path, str(z), str(x), f"{y}.png")
+            
+            if os.path.exists(tile_path):
+                return send_file(tile_path, mimetype='image/png')
+            else:
+                # Return a blank/error tile or 404
+                abort(404)
+
     def setup_routes(self) -> None:
         @self.app_.route('/')
         def index():
-            return render_template('index.html', mapbox_token=os.getenv('MAPBOX_ACCESS_TOKEN'))
+            return render_template('index.html', mapbox_token=os.getenv('MAPBOX_ACCESS_TOKEN'), offline_mode=True)
 
     def update_jackal(self, lat: float, lon: float, popup: str = "phobos"):
         """Update map with gps location of jackal,

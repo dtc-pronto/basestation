@@ -24,8 +24,9 @@ class MapNode:
 
         self.zone_num_ = rospy.get_param("/geoviz/map/zone_number")
         self.zone_id_ = rospy.get_param("/geoviz/map/zone_id")
-
-        self.app_ = MapApp(path, ip = ip, port = port)
+        tile_path = rospy.get_param("~tile_path")
+        rospy.loginfo("Using tiles at: %s" %tile_path)
+        self.app_ = MapApp(path, ip = ip, port = port, tile_path = tile_path)
         self.app_.run_in_thread()
 
         robots = rospy.get_param("/robots")

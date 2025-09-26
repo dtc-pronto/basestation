@@ -1,27 +1,67 @@
 // Wait for the DOM to be fully loaded before initializing the map
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize map with center coordinates and appropriate zoom level
+    
     var map = L.map('map').setView([39.941326, -75.199492], 16);
 
-    // Try different tile providers - one of these should work
-    // 1. Mapbox Satellite
-    var mapboxDetailed = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-        attribution: 'Â© <a href="https://www.mapbox.com/about/maps/">Mapbox</a>',
-        maxZoom: 30,
-        id: 'mapbox/satellite-v9',
-        accessToken: window.MAPBOX_TOKEN 
-    }).addTo(map);
+    // Simple: if OFFLINE_MODE is true, use local tiles. Otherwise use online tiles.
+    var tileLayer;
+
+    var offlineMode = true;  // Since you hardcoded offline mode
     
-    // 2. OpenStreetMap as fallback
+    //if (window.OFFLINE_MODE) {
+        // Use local tiles served by Flask
+    tileLayer = L.tileLayer('/tiles/{z}/{x}/{y}.png', {
+        attribution: 'Offline Satellite Tiles',
+        maxZoom: 20,
+        minZoom: 10
+    }).addTo(map);
+    console.log("Using offline tiles");
+    //} else {
+    //    // Use online Mapbox tiles
+    //    tileLayer = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+    //        attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a>',
+    //        maxZoom: 30,
+    //        id: 'mapbox/satellite-v9',
+    //        accessToken: window.MAPBOX_TOKEN 
+    //    }).addTo(map);
+    //    console.log("Using online Mapbox tiles");
+    //}
+
+    // Fallback OpenStreetMap
     var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: 'Â© OpenStreetMap contributors'
+        attribution: '© OpenStreetMap contributors'
     });
 
-    var baseLayers = {
-        "MapBox Satellite": mapboxDetailed,
-        "OpenStreetMap": osm
+    // Create base layers object
+    var baseLayers = {};
+    //if (window.OFFLINE_MODE) {
+    baseLayers["Offline Tiles"] = tileLayer;
+    baseLayers["OpenStreetMap"] = osm;
+    //} else {
+    //    baseLayers["Mapbox Satellite"] = tileLayer;
+    //    baseLayers["OpenStreetMap"] = osm;
+    //}
+    
+    L.control.layers(baseLayers).addTo(map);
+    
+    // Add connection status indicator
+    var connectionStatus = L.control({position: 'topleft'});
+    connectionStatus.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'connection-status');
+        div.style.cssText = `
+    	background-color: ${offlineMode ? '#f39c12' : '#27ae60'};
+    	color: white;
+    	padding: 5px 10px;
+    	border-radius: 3px;
+    	font-family: 'Courier New', monospace;
+    	font-size: 11px;
+    	font-weight: bold;
+        `;
+        div.innerHTML = offlineMode ? '📍 OFFLINE MODE' : '🌐 ONLINE MODE';
+        return div;
     };
+    connectionStatus.addTo(map);
 
     L.control.layers(baseLayers).addTo(map);
 
