@@ -233,7 +233,57 @@ def report_new_casualty(id, lat, long, time):
     return r
 
 def parse_report_string_as_json(report_str):
-    return json.loads(report_str)
+    data = json.loads(report_str)
+    print(json.dumps(data, indent=2))
+    
+
+    payload = {
+      "hr": {
+        "value": data["hr"]["value"],
+        "time_ago":  data["hr"]["timestamp"] if data["hr"]["timestamp"] > 0 else rospy.Time.now().secs,
+      },
+      "rr": {
+        "value": data["rr"]["value"],
+        "time_ago":  data["rr"]["timestamp"] if data["rr"]["timestamp"] > 0 else rospy.Time.now().secs,
+      },
+      "alertness_ocular": {
+        "value": convert_to_enum(data["alertness_ocular"]["value"]),
+        "time_ago":  data["alertness_ocular"]["timestamp"] if data["alertness_ocular"]["timestamp"] > 0 else rospy.Time.now().secs,
+      },
+      "alertness_verbal": {
+        "value": convert_to_enum(data["alertness_verbal"]["value"]),
+        "time_ago":  data["alertness_verbal"]["timestamp"] if data["alertness_verbal"]["timestamp"] > 0 else rospy.Time.now().secs,
+      },
+      "alertness_motor": {
+        "value": convert_to_enum(data["alertness_motor"]["value"]),
+        "time_ago":  data["alertness_motor"]["timestamp"] if data["alertness_motor"]["timestamp"] > 0 else rospy.Time.now().secs,
+      },
+      "severe_hemorrhage": {
+        "value": convert_to_enum(data["severe_hemorrhage"]["value"]),
+        "time_ago":  data["severe_hemorrhage"]["timestamp"] if data["severe_hemorrhage"]["timestamp"] > 0 else rospy.Time.now().secs,
+      },
+      "respiratory_distress": {
+        "value": convert_to_enum(data["respiratory_distress"]),
+        "time_ago":  data["severe_hemorrhage"]["timestamp"] if data["severe_hemorrhage"]["timestamp"] > 0 else rospy.Time.now().secs,
+      },
+      "trauma_head": convert_to_enum(data["trauma_head"]),
+      "trauma_torso": convert_to_enum(data["trauma_torso"]),
+      "trauma_lower_ext": convert_to_enum(data["trauma_lower_ext"]),
+      "trauma_upper_ext": convert_to_enum(data["trauma_upper_ext"]),
+      "temp": {
+        "value": 98,
+        "time_ago":  data["temp"]["timestamp"] if data["temp"]["timestamp"] > 0 else rospy.Time.now().secs,
+      },
+      "casualty_id": data["casualty_id"],
+      "team": data["team"],
+      "system": data["system"],
+      "location": {
+        "latitude": data["location"]["latitude"],
+        "longitude": data["location"]["longitude"],
+        "time_ago":  data["location"]["timestamp"] if data["location"]["timestamp"] > 0 else rospy.Time.now().secs,
+      }
+    }
+    return payload
 
 def parse_report_string(report_str):
   #time_now = rospy.Time.now().secs

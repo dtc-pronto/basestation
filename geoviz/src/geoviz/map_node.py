@@ -33,19 +33,19 @@ class MapNode:
 
         if "phobos" in robots:
             rospy.Subscriber("/phobos/ublox/fix", NavSatFix, self.phobos_callback)
-            rospy.Subscriber("/phobos/status", JackalStatus, self.phobos_health_callback)
+            rospy.Subscriber("/phobos/sensor_status", JackalStatus, self.phobos_health_callback)
         if "deimos" in robots:
             rospy.Subscriber("/deimos/ublox/fix", NavSatFix, self.deimos_callback)
-            rospy.Subscriber("/deimos/status", JackalStatus, self.deimos_health_callback)
+            rospy.Subscriber("/deimos/sensor_status", JackalStatus, self.deimos_health_callback)
         if "oberon" in robots:
             rospy.Subscriber("/oberon/ublox/fix", NavSatFix, self.oberon_callback)
-            rospy.Subscriber("/oberon/status", JackalStatus, self.oberon_health_callback)
+            rospy.Subscriber("/oberon/sensor_status", JackalStatus, self.oberon_health_callback)
         if "titania" in robots:
             rospy.Subscriber("/titania/ublox/fix", NavSatFix, self.titania_callback)
-            rospy.Subscriber("/titania/status", JackalStatus, self.titania_health_callback)
+            rospy.Subscriber("/titania/sensor_status", JackalStatus, self.titania_health_callback)
         if "dione" in robots:
             rospy.Subscriber("/dione/mavros/global_position/raw/fix", NavSatFix, self.dione_callback)
-            rospy.Subscriber("/dione/status", FalconStatus, self.dione_health_callback)
+            rospy.Subscriber("/dione/sensor_status", FalconStatus, self.dione_health_callback)
 
         rospy.Subscriber("/basestation/scoring_server_report", ServerReport, self.server_callback)
         rospy.Subscriber("/basestation/initial_report", InitialReport, self.initial_report_callback)

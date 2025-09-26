@@ -227,7 +227,7 @@ class SubmissionNode:
         cv2.imwrite(new_jackal_entry["image_path"], image)
 
         self.jackal_casualty_dict_list.append(new_jackal_entry)
-
+        print(self.jackal_casualty_dict_list)
         with open(self.jackal_db, "w") as f:
             json.dump(self.jackal_casualty_dict_list, f, indent=2)
         
