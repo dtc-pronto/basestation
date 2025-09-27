@@ -90,6 +90,9 @@ class MapApp:
     def update_server_report(self, server_data : Dict) -> None:
         self.socketio_.emit('server_report', server_data)
 
+    def update_rssi(self, rssi_data : Dict) -> None:
+        self.socketio_.emit('rssi_report', rssi_data)
+
     def run_in_thread(self) -> None:
         thread = Thread(target=self.run)
         thread.daemon = True

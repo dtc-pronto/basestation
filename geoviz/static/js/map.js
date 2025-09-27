@@ -1,31 +1,29 @@
 // Wait for the DOM to be fully loaded before initializing the map
 document.addEventListener('DOMContentLoaded', function() {
-    
+    // Initialize map with center coordinates and appropriate zoom level
     var map = L.map('map').setView([39.941326, -75.199492], 16);
 
     // Simple: if OFFLINE_MODE is true, use local tiles. Otherwise use online tiles.
     var tileLayer;
-
-    var offlineMode = true;  // Since you hardcoded offline mode
     
-    //if (window.OFFLINE_MODE) {
+    if (window.OFFLINE_MODE) {
         // Use local tiles served by Flask
-    tileLayer = L.tileLayer('/tiles/{z}/{x}/{y}.png', {
-        attribution: 'Offline Satellite Tiles',
-        maxZoom: 20,
-        minZoom: 10
-    }).addTo(map);
-    console.log("Using offline tiles");
-    //} else {
-    //    // Use online Mapbox tiles
-    //    tileLayer = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-    //        attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a>',
-    //        maxZoom: 30,
-    //        id: 'mapbox/satellite-v9',
-    //        accessToken: window.MAPBOX_TOKEN 
-    //    }).addTo(map);
-    //    console.log("Using online Mapbox tiles");
-    //}
+        tileLayer = L.tileLayer('/tiles/{z}/{x}/{y}.png', {
+            attribution: 'Offline Satellite Tiles',
+            maxZoom: 20,
+            minZoom: 10
+        }).addTo(map);
+        console.log("Using offline tiles");
+    } else {
+        // Use online Mapbox tiles
+        tileLayer = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+            attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a>',
+            maxZoom: 30,
+            id: 'mapbox/satellite-v9',
+            accessToken: window.MAPBOX_TOKEN 
+        }).addTo(map);
+        console.log("Using online Mapbox tiles");
+    }
 
     // Fallback OpenStreetMap
     var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -35,33 +33,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Create base layers object
     var baseLayers = {};
-    //if (window.OFFLINE_MODE) {
-    baseLayers["Offline Tiles"] = tileLayer;
-    baseLayers["OpenStreetMap"] = osm;
-    //} else {
-    //    baseLayers["Mapbox Satellite"] = tileLayer;
-    //    baseLayers["OpenStreetMap"] = osm;
-    //}
-    
-    L.control.layers(baseLayers).addTo(map);
-    
-    // Add connection status indicator
-    var connectionStatus = L.control({position: 'topleft'});
-    connectionStatus.onAdd = function (map) {
-        var div = L.DomUtil.create('div', 'connection-status');
-        div.style.cssText = `
-    	background-color: ${offlineMode ? '#f39c12' : '#27ae60'};
-    	color: white;
-    	padding: 5px 10px;
-    	border-radius: 3px;
-    	font-family: 'Courier New', monospace;
-    	font-size: 11px;
-    	font-weight: bold;
-        `;
-        div.innerHTML = offlineMode ? '📍 OFFLINE MODE' : '🌐 ONLINE MODE';
-        return div;
-    };
-    connectionStatus.addTo(map);
+    if (window.OFFLINE_MODE) {
+        baseLayers["Offline Tiles"] = tileLayer;
+        baseLayers["OpenStreetMap"] = osm;
+    } else {
+        baseLayers["Mapbox Satellite"] = tileLayer;
+        baseLayers["OpenStreetMap"] = osm;
+    }
 
     L.control.layers(baseLayers).addTo(map);
 
@@ -79,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var droneMarker = null; // Store current drone marker
     var casualtyMarkers = {}; // Store casualty markers (persistent)
     var robotHealthData = {}; // Store health data for each robot
+    var robotRSSIData = {}; // Store RSSI data for each robot
     var serverReports = []; // Store server reports
     
     var jackalColors = {
@@ -221,6 +200,24 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(`Added casualty ${casualtyId} at position: ${lat}, ${lon}`);
     }
 
+    // Function to get RSSI color based on signal strength
+    function getRSSIColor(rssi) {
+        if (rssi > 34) return '#27ae60'; // Green - Excellent
+        if (rssi > 25) return '#2ecc71'; // Light Green - Good  
+        if (rssi > 15) return '#f39c12'; // Orange - Fair
+        if (rssi > 0) return '#e67e22'; // Dark Orange - Poor
+        return '#e74c3c'; // Red - Very Poor
+    }
+
+    // Function to get RSSI description
+    function getRSSIDescription(rssi) {
+        if (rssi > 34) return 'Excellent';
+        if (rssi > 25) return 'Good';
+        if (rssi > 15) return 'Fair';
+        if (rssi > 0) return 'Poor';
+        return 'Very Poor';
+    }
+
     // Function to create or update robot health status card
     function updateRobotHealth(healthData) {
         var robotName = healthData.robot_name.toLowerCase();
@@ -234,7 +231,19 @@ document.addEventListener('DOMContentLoaded', function() {
             // Create new health card
             var cardHtml = `
                 <div class="robot-health-card" id="health-card-${robotName}">
-                    <div class="robot-name">${robotName}</div>
+                    <div class="robot-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div class="robot-name">${robotName}</div>
+                        <div class="rssi-indicator" id="rssi-${robotName}" style="
+                            padding: 3px 8px;
+                            border-radius: 4px;
+                            font-size: 10px;
+                            font-weight: bold;
+                            color: white;
+                            background-color: #95a5a6;
+                            min-width: 50px;
+                            text-align: center;
+                        ">NO RSSI</div>
+                    </div>
                     <div class="sensor-grid" id="sensor-grid-${robotName}">
                         <!-- Sensors will be added here -->
                     </div>
@@ -274,6 +283,29 @@ document.addEventListener('DOMContentLoaded', function() {
             'Last Update: ' + new Date().toLocaleTimeString();
         
         console.log(`Updated health status for ${robotName}:`, healthData);
+    }
+
+    // Function to handle RSSI updates
+    function updateRSSI(rssiData) {
+        var robotName = rssiData.robot_name.toLowerCase();
+        var rssi = rssiData.rssi;
+        
+        // Store RSSI data
+        robotRSSIData[robotName] = rssiData;
+        
+        // Update RSSI indicator if health card exists
+        var rssiIndicator = document.getElementById('rssi-' + robotName);
+        if (rssiIndicator) {
+            var color = getRSSIColor(rssi);
+            var description = getRSSIDescription(rssi);
+            
+            rssiIndicator.style.backgroundColor = color;
+            rssiIndicator.innerHTML = `${rssi}<br><span style="font-size: 8px;">${description}</span>`;
+            
+            console.log(`Updated RSSI for ${robotName}: ${rssi} (${description})`);
+        } else {
+            console.log(`RSSI indicator not found for ${robotName}, health card may not exist yet`);
+        }
     }
 
     // Function to handle server report updates
@@ -609,6 +641,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Handle RSSI updates
+    socket.on('rssi_report', function(data) {
+        console.log('Received RSSI update:', data);
+        
+        if (data && typeof data === 'object' && data.robot_name) {
+            updateRSSI(data);
+        } else {
+            console.error('Invalid RSSI data:', data);
+        }
+    });
+
     // Add layer control for toggling markers only
     var overlayLayers = {
         "Robot Markers": objectsLayer,
@@ -657,6 +700,13 @@ document.addEventListener('DOMContentLoaded', function() {
         message = message || 'Test server report message';
         var reportData = {robot_name: robotName, code: code, message: message};
         handleServerReport(reportData);
+    };
+
+    window.addTestRSSI = function(robotName, rssi) {
+        robotName = robotName || 'phobos';
+        rssi = rssi || -65; // Default to fair signal
+        var rssiData = {robot_name: robotName, rssi: rssi};
+        updateRSSI(rssiData);
     };
 
     window.clearAllCasualties = function() {
