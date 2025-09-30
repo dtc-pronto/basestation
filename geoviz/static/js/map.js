@@ -1,29 +1,29 @@
 // Wait for the DOM to be fully loaded before initializing the map
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize map with center coordinates and appropriate zoom level
-    var map = L.map('map').setView([39.941326, -75.199492], 16);
+    var map = L.map('map').setView([32.502656, -83.752355], 16);
 
     // Simple: if OFFLINE_MODE is true, use local tiles. Otherwise use online tiles.
     var tileLayer;
     
-    if (window.OFFLINE_MODE) {
-        // Use local tiles served by Flask
-        tileLayer = L.tileLayer('/tiles/{z}/{x}/{y}.png', {
-            attribution: 'Offline Satellite Tiles',
-            maxZoom: 20,
-            minZoom: 10
-        }).addTo(map);
-        console.log("Using offline tiles");
-    } else {
-        // Use online Mapbox tiles
-        tileLayer = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-            attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a>',
-            maxZoom: 30,
-            id: 'mapbox/satellite-v9',
-            accessToken: window.MAPBOX_TOKEN 
-        }).addTo(map);
-        console.log("Using online Mapbox tiles");
-    }
+    //if (window.OFFLINE_MODE) {
+    // Use local tiles served by Flask
+    tileLayer = L.tileLayer('/tiles/{z}/{x}/{y}.png', {
+        attribution: 'Offline Satellite Tiles',
+        maxZoom: 20,
+        minZoom: 10
+    }).addTo(map);
+    console.log("Using offline tiles");
+    //} else {
+    //    // Use online Mapbox tiles
+    //    tileLayer = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+    //        attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a>',
+    //        maxZoom: 30,
+    //        id: 'mapbox/satellite-v9',
+    //        accessToken: window.MAPBOX_TOKEN 
+    //    }).addTo(map);
+    //    console.log("Using online Mapbox tiles");
+    //}
 
     // Fallback OpenStreetMap
     var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -33,13 +33,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Create base layers object
     var baseLayers = {};
-    if (window.OFFLINE_MODE) {
-        baseLayers["Offline Tiles"] = tileLayer;
-        baseLayers["OpenStreetMap"] = osm;
-    } else {
-        baseLayers["Mapbox Satellite"] = tileLayer;
-        baseLayers["OpenStreetMap"] = osm;
-    }
+    //if (window.OFFLINE_MODE) {
+    baseLayers["Offline Tiles"] = tileLayer;
+    baseLayers["OpenStreetMap"] = osm;
+    //} else {
+    //    baseLayers["Mapbox Satellite"] = tileLayer;
+    //    baseLayers["OpenStreetMap"] = osm;
+    //}
 
     L.control.layers(baseLayers).addTo(map);
 

@@ -85,10 +85,10 @@ class TileDownloader:
 
 if __name__ == "__main__":
     # Your area coordinates (adjust as needed)
-    NORTH = 39.943
-    SOUTH = 39.939  
-    EAST = -75.198
-    WEST = -75.200
+    NORTH = 32.506
+    SOUTH = 32.497
+    EAST = -83.749
+    WEST = -83.759
     
     # Your Mapbox token
     MAPBOX_TOKEN = "pk.eyJ1IjoiamFzb25haCIsImEiOiJjbThxOWt5ZnMwa3NxMmtwdTEwYjJ1ajZ3In0.LGKzoIXaNi9j7lXhypfBPQ"
