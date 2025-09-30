@@ -1,9 +1,7 @@
-import pytest
 import requests
 import os
 from dotenv import load_dotenv
 
-@pytest.fixture(scope="module")
 def api_config():
     """Load environment variables"""
     load_dotenv()
@@ -15,25 +13,6 @@ def api_config():
     
     return {"token": token, "base_url": base_url}
 
-#def test_create_new_run(api_config):
-#    """Test creating a new run"""
-#    url = f"{api_config['base_url']}/api/run/new"
-#    headers = {"accept": "application/json"}
-#    
-#    response = requests.get(url, headers=headers)
-#    print(f"Create run - Status: {response.status_code}, Response: {response.text}")
-#    
-#    assert response.status_code == 200
-#
-#def test_start_run(api_config):
-#    """Test starting a run"""
-#    url = f"{api_config['base_url']}/api/run/start"
-#    headers = {"accept": "application/json"}
-#    
-#    response = requests.get(url, headers=headers)
-#    print(f"Start run - Status: {response.status_code}, Response: {response.text}")
-#    
-#    assert response.status_code == 200
 
 def test_initial_report(api_config):
     TOKEN = api_config["token"]
@@ -93,3 +72,8 @@ def test_initial_report(api_config):
 
     r = requests.post(f"{BASE_URL}/api/initial_report", headers=headers, json=payload)
     assert r.status_code == 200
+    print("passed")
+
+if __name__ == "__main__":
+    api = api_config()
+    test_initial_report(api)

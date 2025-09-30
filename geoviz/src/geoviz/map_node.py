@@ -117,7 +117,7 @@ class MapNode:
         rssi = msg.data
         self.app_.update_rssi({"robot_name": "deimos", "rssi": rssi})
 
-    def titiania_rssi_callback(self, msg : Int32):
+    def titania_rssi_callback(self, msg : Int32):
         rssi = msg.data
         self.app_.update_rssi({"robot_name": "titania", "rssi": rssi})
 

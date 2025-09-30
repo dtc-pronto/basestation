@@ -64,7 +64,9 @@ class Casualty:
 
 class SubmissionNode:
     def __init__(self):
-        start_run()
+        if rospy.get_param("~start_run"):
+            rospy.loginfo("[SENDER] Starting run")
+            start_run()
         
         threshold_config_path = rospy.get_param("~threshold_path")
         with open(threshold_config_path, "r") as f:

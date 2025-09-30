@@ -63,6 +63,7 @@ COPY basestation-launch ws/src/basestation-launch
 COPY basestation-msgs ws/src/basestation-msgs
 COPY ./entrypoint.bash entrypoint.bash
 RUN sudo chown $USER:$USER entrypoint.bash && chmod +x entrypoint.bash
+RUN pip3 install pytest
 
 ENV MOCHA=false
 ENV RTK=false
