@@ -38,25 +38,35 @@ def submit_image(image_path, time, id):
     return r
 
 
-def convert_to_enum(value):
-    if (value.lower() == "absence"):
-        return 0
-    elif (value.lower() == "presence"):
-        return 1
-    elif (value.lower() == "wound"):
-        return 1
-    elif (value.lower() == "amputation"):
-        return 2
-    elif (value.lower() == "open"):
-        return 0
-    elif (value.lower() == "closed"):
-        return 1
-    elif (value.lower() == "abnormal"):
-        return 1
-    elif (value.lower() == "untestable"):
-        return 3
-    elif (value.lower() == "absent"):
-        return 2
+def convert_to_enum(value, key=None):
+    value = value.lower()
+
+    binary_keys = {
+        "severe_hemorrhage": {"absence": 0, "presence": 1},
+        "respiratory_distress": {"absence": 0, "presence": 1},
+        "trauma_head": {"absence": 0, "presence": 1},
+        "trauma_torso": {"absence": 0, "presence": 1},
+    }
+
+    trauma_ext_keys = {
+        "trauma_upper_ext": {"absence": 0, "wound": 1, "amputation": 2},
+        "trauma_lower_ext": {"absence": 0, "wound": 1, "amputation": 2},
+    }
+
+    alertness_keys = {
+        "alertness_verbal": {"presence": 0, "abnormal": 1, "absence": 2},
+        "alertness_ocular": {"open": 0, "closed": 1},
+        "alertness_motor": {"presence": 0, "absence": 2}  
+    }
+
+    if key in binary_keys:
+        return binary_keys[key].get(value)
+    elif key in trauma_ext_keys:
+        return trauma_ext_keys[key].get(value)
+    elif key in alertness_keys:
+        return alertness_keys[key].get(value)
+    
+    return None  # or raise an error
 
 def start_run():
     load_dotenv()
@@ -247,29 +257,29 @@ def parse_report_string_as_json(report_str):
         "time_ago":  data["rr"]["timestamp"] if data["rr"]["timestamp"] > 0 else rospy.Time.now().secs,
       },
       "alertness_ocular": {
-        "value": convert_to_enum(data["alertness_ocular"]["value"]),
+        "value": convert_to_enum(data["alertness_ocular"]["value"], "alertness_ocular"),
         "time_ago":  data["alertness_ocular"]["timestamp"] if data["alertness_ocular"]["timestamp"] > 0 else rospy.Time.now().secs,
       },
       "alertness_verbal": {
-        "value": convert_to_enum(data["alertness_verbal"]["value"]),
+        "value": convert_to_enum(data["alertness_verbal"]["value"], "alertness_verbal"),
         "time_ago":  data["alertness_verbal"]["timestamp"] if data["alertness_verbal"]["timestamp"] > 0 else rospy.Time.now().secs,
       },
       "alertness_motor": {
-        "value": convert_to_enum(data["alertness_motor"]["value"]),
+        "value": convert_to_enum(data["alertness_motor"]["value"], "alertness_motor"),
         "time_ago":  data["alertness_motor"]["timestamp"] if data["alertness_motor"]["timestamp"] > 0 else rospy.Time.now().secs,
       },
       "severe_hemorrhage": {
-        "value": convert_to_enum(data["severe_hemorrhage"]["value"]),
+        "value": convert_to_enum(data["severe_hemorrhage"]["value"], "severe_hemorrhage"),
         "time_ago":  data["severe_hemorrhage"]["timestamp"] if data["severe_hemorrhage"]["timestamp"] > 0 else rospy.Time.now().secs,
       },
       "respiratory_distress": {
-        "value": convert_to_enum(data["respiratory_distress"]),
+        "value": convert_to_enum(data["respiratory_distress"], "respiratory_distress"),
         "time_ago":  data["severe_hemorrhage"]["timestamp"] if data["severe_hemorrhage"]["timestamp"] > 0 else rospy.Time.now().secs,
       },
-      "trauma_head": convert_to_enum(data["trauma_head"]),
-      "trauma_torso": convert_to_enum(data["trauma_torso"]),
-      "trauma_lower_ext": convert_to_enum(data["trauma_lower_ext"]),
-      "trauma_upper_ext": convert_to_enum(data["trauma_upper_ext"]),
+      "trauma_head": convert_to_enum(data["trauma_head"], "trauma_head"),
+      "trauma_torso": convert_to_enum(data["trauma_torso"], "trauma_torso"),
+      "trauma_lower_ext": convert_to_enum(data["trauma_lower_ext"], "trauma_lower_ext"),
+      "trauma_upper_ext": convert_to_enum(data["trauma_upper_ext"], "trauma_upper_ext"),
       "temp": {
         "value": 98,
         "time_ago":  data["temp"]["timestamp"] if data["temp"]["timestamp"] > 0 else rospy.Time.now().secs,
@@ -343,9 +353,9 @@ def parse_report_string(report_str):
                 for key, value in report_dict.items():
                     if key in payload:
                         if key in ["trauma_head", "trauma_torso", "trauma_lower_ext", "trauma_upper_ext"]:
-                            payload[key] = convert_to_enum(value)
+                            payload[key] = convert_to_enum(value, key)
                         elif key in ["alertness_ocular", "alertness_verbal", "alertness_motor", "severe_hemorrhage", "respiratory_distress"] and isinstance(value, dict):
-                            payload[key]["value"] = convert_to_enum(value["value"])
+                            payload[key]["value"] = convert_to_enum(value["value"], key)
                             payload[key]["time_ago"] = float(value[key]["timestamp"])
                         elif key in ["hr", "rr", "temp"] and isinstance(value, dict):
                             payload[key]["value"] = float(value["value"])
