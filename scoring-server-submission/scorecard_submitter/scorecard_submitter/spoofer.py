@@ -11,7 +11,9 @@ import cv2
 import utm
 import json
 import numpy as np
-import rospy
+import rclpy
+from rclpy.node import Node
+from rclpy.time import Time
 
 from std_msgs.msg import String
 from dtc_msgs.msg import ScoreCardString, CasualtyFixArray, CasualtyFix
@@ -19,35 +21,36 @@ from sensor_msgs.msg import CompressedImage
 
 from typing import Dict, Tuple, List
 
-def initReport() -> Dict:
+def initReport(node: Node) -> Dict:
+    now = node.get_clock().now().nanoseconds / 1e9
     return {
       "hr": {
         "value": 0,
-        "time_ago": rospy.Time.now().to_sec()
+        "time_ago": now
       },
       "rr": {
         "value": 0,
-        "time_ago": rospy.Time.now().to_sec()
+        "time_ago": now
       },
       "alertness_ocular": {
         "value": 0,
-        "time_ago":  rospy.Time.now().to_sec()
+        "time_ago": now
       },
       "alertness_verbal": {
         "value": 0,
-        "time_ago":  rospy.Time.now().to_sec()
+        "time_ago": now
       },
       "alertness_motor": {
         "value": 0,
-        "time_ago":  rospy.Time.now().to_sec()
+        "time_ago": now
       },
       "severe_hemorrhage": {
         "value": 0,
-        "time_ago":  rospy.Time.now().to_sec()
+        "time_ago": now
       },
       "respiratory_distress": {
         "value": 0,
-        "time_ago":  rospy.Time.now().to_sec()
+        "time_ago": now
       },
       "trauma_head": 0,
       "trauma_torso": 0,
@@ -55,7 +58,7 @@ def initReport() -> Dict:
       "trauma_upper_ext": 0,
       "temp": {
         "value": 98,
-        "time_ago":  rospy.Time.now().to_sec()
+        "time_ago": now
       },
       "casualty_id": 2,
       "team": "PennPronto",
@@ -63,7 +66,7 @@ def initReport() -> Dict:
       "location": {
         "latitude": 0.0,
         "longitude": 0.0,
-        "time_ago":  rospy.Time.now().to_sec()
+        "time_ago": now
       }}
 
 def initGps(count : int) -> List[float]:
@@ -74,33 +77,37 @@ def initGps(count : int) -> List[float]:
               [39.942539, -75.199448]]
     return coords[count]
 
-class ScoreCardSpoof:
+class ScoreCardSpoof(Node):
 
     def __init__(self) -> None:
+        super().__init__('spoofer_node')
 
         self.fix_arr_ = list()
-        robots = rospy.get_param("/robots")
+        
+        # Declare and get the robots parameter
+        self.declare_parameter('robots', [])
+        robots = self.get_parameter('robots').value
 
         if "deimos" in robots:
-            rospy.Timer(rospy.Duration(7.0), self.deimosCallback)
-            self.deimos_pub_ = rospy.Publisher("/deimos/report_status", ScoreCardString, queue_size=1)
+            self.deimos_timer_ = self.create_timer(7.0, self.deimosCallback)
+            self.deimos_pub_ = self.create_publisher(ScoreCardString, "/deimos/report_status", 1)
             self.deimos_count_ = 0
         if "phobos" in robots:
-            rospy.Timer(rospy.Duration(2.0), self.phobosCallback)
-            self.phobos_pub_ = rospy.Publisher("/phobos/report_status", ScoreCardString, queue_size=1)
+            self.phobos_timer_ = self.create_timer(2.0, self.phobosCallback)
+            self.phobos_pub_ = self.create_publisher(ScoreCardString, "/phobos/report_status", 1)
             self.phobos_count_ = 2
         if "titania" in robots:
-            rospy.Timer(rospy.Duration(1.0), self.titaniaCallback)
-            self.titania_pub_ = rospy.Publisher("/titania/report_status", ScoreCardString, queue_size=1)
+            self.titania_timer_ = self.create_timer(1.0, self.titaniaCallback)
+            self.titania_pub_ = self.create_publisher(ScoreCardString, "/titania/report_status", 1)
             self.titania_count_ = 3
         if "oberon" in robots:
-            rospy.Timer(rospy.Duration(8.0), self.oberonCallback)
-            self.oberon_pub_ = rospy.Publisher("/oberon/report_status", ScoreCardString, queue_size=1)
+            self.oberon_timer_ = self.create_timer(8.0, self.oberonCallback)
+            self.oberon_pub_ = self.create_publisher(ScoreCardString, "/oberon/report_status", 1)
             self.oberon_count_ = 1
 
         if "dione" in robots:
-            rospy.Timer(rospy.Duration(3.0), self.dioneCallback)
-            self.dione_pub_ = rospy.Publisher("/dione/casualty_info", CasualtyFixArray, queue_size=1)
+            self.dione_timer_ = self.create_timer(3.0, self.dioneCallback)
+            self.dione_pub_ = self.create_publisher(CasualtyFixArray, "/dione/casualty_info", 1)
             self.dione_count_ = 0
             
 
@@ -115,7 +122,7 @@ class ScoreCardSpoof:
 
     def createCompressedImageMsg(self, image : np.ndarray ) -> CompressedImage:
         compressed_img = CompressedImage()
-        compressed_img.header.stamp = rospy.Time.now()
+        compressed_img.header.stamp = self.get_clock().now().to_msg()
         compressed_img.header.frame_id = "camera_frame"
         
         # Set format
@@ -134,7 +141,7 @@ class ScoreCardSpoof:
         return msg
 
     def createRandomMsg(self, count : int, robot : str) -> ScoreCardString:
-        report = initReport()
+        report = initReport(self)
         coords = self.getGpsCoord(count)
         
         report["location"]["latitude"] = coords[0]
@@ -151,47 +158,46 @@ class ScoreCardSpoof:
 
         return msg
 
-    def createCasualtyFix(self, count : int) -> CasualtyFixArray:
+    def createCasualtyFix(self, count : int) -> CasualtyFix:
         coords = self.getGpsCoord(count)
         msg = CasualtyFix()
         msg.casualty_id = count
         msg.location.latitude = coords[0]
         msg.location.longitude = coords[1]
-        msg.time_ago.data = rospy.Time.now()
-
+        msg.time_ago.data = self.get_clock().now().to_msg()
 
         return msg
 
-    def deimosCallback(self, event) -> None:
-        rospy.loginfo("Spoofing Deimos")
+    def deimosCallback(self) -> None:
+        self.get_logger().info("Spoofing Deimos")
         if self.deimos_count_ == 4: return
         msg = self.createRandomMsg(self.deimos_count_, "deimos")
         self.deimos_pub_.publish(msg)
         self.deimos_count_+=1
 
-    def phobosCallback(self, event) -> None:
+    def phobosCallback(self) -> None:
         if self.phobos_count_ == 4: return
-        rospy.loginfo("Spoofing Phobos")
+        self.get_logger().info("Spoofing Phobos")
         msg = self.createRandomMsg(self.phobos_count_, "phobos")
         self.phobos_pub_.publish(msg)
         self.phobos_count_+=1
 
-    def titaniaCallback(self, event) -> None: 
-        rospy.loginfo("Spoofing Titania")
+    def titaniaCallback(self) -> None: 
+        self.get_logger().info("Spoofing Titania")
         if self.titania_count_ == 4: return
         msg = self.createRandomMsg(self.titania_count_, "titania")
         self.titania_pub_.publish(msg)
         self.titania_count_+=1
 
-    def oberonCallback(self, event) -> None:
-        rospy.loginfo("Spoofing Oberon")
+    def oberonCallback(self) -> None:
+        self.get_logger().info("Spoofing Oberon")
         if self.oberon_count_ == 4: return
         msg = self.createRandomMsg(self.oberon_count_, "oberon")
         self.oberon_pub_.publish(msg)
         self.oberon_count_+=1
 
-    def dioneCallback(self, event) -> None:
-        rospy.loginfo("Spoofing Dione")
+    def dioneCallback(self) -> None:
+        self.get_logger().info("Spoofing Dione")
         if self.dione_count_ == 4: return
 
         msg = self.createCasualtyFix(self.dione_count_)
@@ -199,7 +205,7 @@ class ScoreCardSpoof:
         self.fix_arr_.append(msg)
 
         msg_arr = CasualtyFixArray()
-        msg_arr.header.stamp = rospy.Time.now()
+        msg_arr.header.stamp = self.get_clock().now().to_msg()
         msg_arr.casualties = self.fix_arr_
 
         self.dione_pub_.publish(msg_arr)
@@ -207,8 +213,14 @@ class ScoreCardSpoof:
 
 
 if __name__ == "__main__":
-    rospy.init_node("spoofer_node")
-
-    ScoreCardSpoof()
-
-    rospy.spin()
+    rclpy.init()
+    
+    node = ScoreCardSpoof()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
