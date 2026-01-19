@@ -4,13 +4,12 @@ import os
 import json
 from dotenv import load_dotenv
 import ast
-import rospy
 
 total_init_pos = 0
 total_init_supp = 0
 total_update = 0
 #TODO: add casulty_id, team, system, time_ago to submit_scorecard and submit_image functions
-def submit_image(image_path, time, id):
+def submit_image(image_path, time, time_now, id):
     # Load .env file
     load_dotenv()
     print("Submitting Image")
@@ -30,7 +29,7 @@ def submit_image(image_path, time, id):
         "casualty_id": id,
         "team": "PennPRONTO",
         "system": "JackalNVILA",
-        "time_ago": max(time - rospy.Time.now().secs, 0),
+        "time_ago": max(time - time_now, 0),
     }
 
     r = requests.post(f"{BASE_URL}/api/casualty_image", headers=headers, files=files, data=data)
@@ -88,7 +87,7 @@ def start_run():
     print(response.status_code, r.json())
     return r
 
-def update_casualty(id, payload):
+def update_casualty(id, payload, time_now):
     global total_update
     total_update += 1
     load_dotenv()
@@ -103,18 +102,17 @@ def update_casualty(id, payload):
     }
 
     #Go through all time_ago fields and update them to be the difference between now and the time in the payload
-    current_time = rospy.Time.now().secs
     for key in payload:
       if isinstance(payload[key], dict) and "time_ago" in payload[key].keys():
-        payload[key]["time_ago"] = max(current_time - payload[key]["time_ago"], 0)
-    
+        payload[key]["time_ago"] = max(time_now - payload[key]["time_ago"], 0)
+
     payload["casualty_id"] = id
                  
     r = requests.post(f"{BASE_URL}/api/update_report", headers=headers, json=payload)
     print(r.status_code, r.json())
     return r
 
-def init_position(id, lat, lon, time):
+def init_position(id, lat, lon, time, time_now):
     global total_init_pos
     total_init_pos += 1
     load_dotenv()
@@ -135,7 +133,7 @@ def init_position(id, lat, lon, time):
       "location": {
         "latitude": lat,
         "longitude": lon,
-        "time_ago": max(time - rospy.Time.now().secs, 0),
+        "time_ago": max(time - time_now, 0),
       }
     }
     
@@ -145,7 +143,7 @@ def init_position(id, lat, lon, time):
     print(r.status_code, r.json())
     return r
 
-def init_supplement(id, payload):
+def init_supplement(id, payload, time_now):
     global total_init_supp
     total_init_supp += 1
     load_dotenv()
@@ -160,11 +158,10 @@ def init_supplement(id, payload):
     }
 
     #Go through all time_ago fields and update them to be the difference between now and the time in the payload
-    current_time = rospy.Time.now().secs
     for key in payload:
       if isinstance(payload[key], dict) and "time_ago" in payload[key].keys():
-        payload[key]["time_ago"] = max(current_time - payload[key]["time_ago"], 0)
-    
+        payload[key]["time_ago"] = max(time_now - payload[key]["time_ago"], 0)
+
     payload["casualty_id"] = id
 
     print(payload)
@@ -179,7 +176,7 @@ def total_posts():
     print(f"Total Initial Supplements: {total_init_supp}")
     print(f"Total Updates: {total_update}")
 
-def report_new_casualty(id, lat, long, time):
+def report_new_casualty(id, lat, long, time, time_now):
     load_dotenv()
     print("new casualty...")
     TOKEN = os.getenv("TOKEN")
@@ -194,31 +191,31 @@ def report_new_casualty(id, lat, long, time):
     payload = {
       "hr": {
         "value": 0,
-        "time_ago":  max(time - rospy.Time.now().secs, 0),
+        "time_ago":  max(time - time_now, 0),
       },
       "rr": {
         "value": 0,
-        "time_ago":  max(time - rospy.Time.now().secs, 0),
+        "time_ago":  max(time - time_now, 0),
       },
       "alertness_ocular": {
         "value": 0,
-        "time_ago":  max(time - rospy.Time.now().secs, 0),
+        "time_ago":  max(time - time_now, 0),
       },
       "alertness_verbal": {
         "value": 0,
-        "time_ago":  max(time - rospy.Time.now().secs, 0),
+        "time_ago":  max(time - time_now, 0),
       },
       "alertness_motor": {
         "value": 0,
-        "time_ago":  max(time - rospy.Time.now().secs, 0),
+        "time_ago":  max(time - time_now, 0),
       },
       "severe_hemorrhage": {
         "value": 0,
-        "time_ago":  max(time - rospy.Time.now().secs, 0),
+        "time_ago":  max(time - time_now, 0),
       },
       "respiratory_distress": {
         "value": 0,
-        "time_ago":  max(time - rospy.Time.now().secs, 0),
+        "time_ago":  max(time - time_now, 0),
       },
       "trauma_head": 0,
       "trauma_torso": 0,
@@ -226,7 +223,7 @@ def report_new_casualty(id, lat, long, time):
       "trauma_upper_ext": 0,
       "temp": {
         "value": 98,
-        "time_ago":  max(time - rospy.Time.now().secs, 0),
+        "time_ago":  max(time - time_now, 0),
       },
       "casualty_id": id,
       "team": payload["system"],
@@ -234,7 +231,7 @@ def report_new_casualty(id, lat, long, time):
       "location": {
         "latitude": lat,
         "longitude": long,
-        "time_ago":  max(time - rospy.Time.now().secs, 0),
+        "time_ago":  max(time - time_now, 0),
       }
     }
 
@@ -242,7 +239,8 @@ def report_new_casualty(id, lat, long, time):
     print(r.status_code, r.json())
     return r
 
-def parse_report_string_as_json(report_str):
+def parse_report_string_as_json(report_str, time_now:str):
+  #time_now = rospy.Time.now().secs
     data = json.loads(report_str)
     print(json.dumps(data, indent=2))
     
@@ -250,31 +248,31 @@ def parse_report_string_as_json(report_str):
     payload = {
       "hr": {
         "value": data["hr"]["value"],
-        "time_ago":  data["hr"]["timestamp"] if data["hr"]["timestamp"] > 0 else rospy.Time.now().secs,
+        "time_ago":  data["hr"]["timestamp"] if data["hr"]["timestamp"] > 0 else time_now,
       },
       "rr": {
         "value": data["rr"]["value"],
-        "time_ago":  data["rr"]["timestamp"] if data["rr"]["timestamp"] > 0 else rospy.Time.now().secs,
+        "time_ago":  data["rr"]["timestamp"] if data["rr"]["timestamp"] > 0 else time_now,
       },
       "alertness_ocular": {
         "value": convert_to_enum(data["alertness_ocular"]["value"], "alertness_ocular"),
-        "time_ago":  data["alertness_ocular"]["timestamp"] if data["alertness_ocular"]["timestamp"] > 0 else rospy.Time.now().secs,
+        "time_ago":  data["alertness_ocular"]["timestamp"] if data["alertness_ocular"]["timestamp"] > 0 else time_now,
       },
       "alertness_verbal": {
         "value": convert_to_enum(data["alertness_verbal"]["value"], "alertness_verbal"),
-        "time_ago":  data["alertness_verbal"]["timestamp"] if data["alertness_verbal"]["timestamp"] > 0 else rospy.Time.now().secs,
+        "time_ago":  data["alertness_verbal"]["timestamp"] if data["alertness_verbal"]["timestamp"] > 0 else time_now,
       },
       "alertness_motor": {
         "value": convert_to_enum(data["alertness_motor"]["value"], "alertness_motor"),
-        "time_ago":  data["alertness_motor"]["timestamp"] if data["alertness_motor"]["timestamp"] > 0 else rospy.Time.now().secs,
+        "time_ago":  data["alertness_motor"]["timestamp"] if data["alertness_motor"]["timestamp"] > 0 else time_now,
       },
       "severe_hemorrhage": {
         "value": convert_to_enum(data["severe_hemorrhage"]["value"], "severe_hemorrhage"),
-        "time_ago":  data["severe_hemorrhage"]["timestamp"] if data["severe_hemorrhage"]["timestamp"] > 0 else rospy.Time.now().secs,
+        "time_ago":  data["severe_hemorrhage"]["timestamp"] if data["severe_hemorrhage"]["timestamp"] > 0 else time_now,
       },
       "respiratory_distress": {
         "value": convert_to_enum(data["respiratory_distress"], "respiratory_distress"),
-        "time_ago":  data["severe_hemorrhage"]["timestamp"] if data["severe_hemorrhage"]["timestamp"] > 0 else rospy.Time.now().secs,
+        "time_ago":  data["severe_hemorrhage"]["timestamp"] if data["severe_hemorrhage"]["timestamp"] > 0 else time_now,
       },
       "trauma_head": convert_to_enum(data["trauma_head"], "trauma_head"),
       "trauma_torso": convert_to_enum(data["trauma_torso"], "trauma_torso"),
@@ -282,7 +280,7 @@ def parse_report_string_as_json(report_str):
       "trauma_upper_ext": convert_to_enum(data["trauma_upper_ext"], "trauma_upper_ext"),
       "temp": {
         "value": 98,
-        "time_ago":  data["temp"]["timestamp"] if data["temp"]["timestamp"] > 0 else rospy.Time.now().secs,
+        "time_ago":  data["temp"]["timestamp"] if data["temp"]["timestamp"] > 0 else time_now,
       },
       "casualty_id": data["casualty_id"],
       "team": data["team"],
@@ -290,7 +288,7 @@ def parse_report_string_as_json(report_str):
       "location": {
         "latitude": data["location"]["latitude"],
         "longitude": data["location"]["longitude"],
-        "time_ago":  data["location"]["timestamp"] if data["location"]["timestamp"] > 0 else rospy.Time.now().secs,
+        "time_ago":  data["location"]["timestamp"] if data["location"]["timestamp"] > 0 else time_now,
       }
     }
     return payload

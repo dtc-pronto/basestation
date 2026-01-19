@@ -3,7 +3,6 @@ import json
 import math
 import utm
 from submission import parse_report_string
-import rospy
 import copy
 
 #make a struct for matching table entry
@@ -74,7 +73,7 @@ def closest_casualty(report, casualty_list):
                 
     return closest_casualty, min_distance, idx, payload
 
-def update_drone_casualty_db(db_path, ugv_uav_threshold=7):
+def update_drone_casualty_db(db_path, time_now:str, ugv_uav_threshold=7):
     print("UPDATING DRONE CASUALTY DB")
     with open(os.path.join(db_path, "uav_casualty_list.json"), "r") as f:
         uav_db = json.load(f)
@@ -90,7 +89,7 @@ def update_drone_casualty_db(db_path, ugv_uav_threshold=7):
                 entry["uav"]["lat"], entry["uav"]["lon"] = drone_det["lat"], drone_det["lon"]
                 print(f"Updating drone position for casualty {entry['casualty_id']}")
                 entry["action"] = ""
-                entry["timestamp"] = rospy.Time.now().to_sec()
+                entry["timestamp"] = time_now
     
     #For each drone 
     for drone_det in uav_db:
@@ -111,7 +110,7 @@ def update_drone_casualty_db(db_path, ugv_uav_threshold=7):
             matching_table[closest_idx]["uav"]["id"] = drone_det["id"]
             matching_table[closest_idx]["uav"]["lat"], matching_table[closest_idx]["uav"]["lon"] = drone_det["lat"], drone_det["lon"]
             matching_table[closest_idx]["action"] = "" #we don't do anything since the jackal found it first
-            matching_table[closest_idx]["timestamp"] = rospy.Time.now().to_sec()
+            matching_table[closest_idx]["timestamp"] = time_now
         #or else this is a new casualty for the drone
         elif not any(entry["uav"]["id"] == drone_det["id"] for entry in matching_table):
             new_entry = copy.deepcopy(matching_entry)
@@ -119,7 +118,7 @@ def update_drone_casualty_db(db_path, ugv_uav_threshold=7):
             new_entry["uav"]["lat"], new_entry["uav"]["lon"] = drone_det["lat"], drone_det["lon"]
             new_entry["casualty_id"] = len(matching_table)
             new_entry["action"] = "init"
-            new_entry["timestamp"] = rospy.Time.now().to_sec()
+            new_entry["timestamp"] = time_now
             print(new_entry)
             matching_table.append(new_entry)
 
@@ -127,7 +126,7 @@ def update_drone_casualty_db(db_path, ugv_uav_threshold=7):
         json.dump(matching_table, f, indent=2)
 
 
-def update_jackal_casualty_db(db_path, ugv_uav_threshold=7,ugv_ugv_threshold=2):
+def update_jackal_casualty_db(db_path, time_now:str, ugv_uav_threshold=7,ugv_ugv_threshold=2):
     print("UPDATING JACKAL CASUALTY DB")
     with open(os.path.join(db_path,"ugv_casualty_list.json"), "r") as f:
         ugv_db = json.load(f)
@@ -152,7 +151,7 @@ def update_jackal_casualty_db(db_path, ugv_uav_threshold=7,ugv_ugv_threshold=2):
         matching_table[closest_idx]["report"] = latest_casualty["report"]
         matching_table[closest_idx]["image_path"] = latest_casualty["image_path"]
         matching_table[closest_idx]["action"] = "update"
-        matching_table[closest_idx]["timestamp"] = rospy.Time.now().to_sec()
+        matching_table[closest_idx]["timestamp"] = time_now
 
         with open(os.path.join(db_path, "matching_table.json"), "w") as f:
             json.dump(matching_table, f, indent=2)
@@ -177,7 +176,7 @@ def update_jackal_casualty_db(db_path, ugv_uav_threshold=7,ugv_ugv_threshold=2):
         matching_table[closest_idx]["report"] = latest_casualty["report"]
         matching_table[closest_idx]["image_path"] = latest_casualty["image_path"]
         matching_table[closest_idx]["action"] = "init_update"
-        matching_table[closest_idx]["timestamp"] = rospy.Time.now().to_sec()
+        matching_table[closest_idx]["timestamp"] = time_now
     else: #this means jackal found this before a drone did
         new_entry = copy.deepcopy(matching_entry)
         new_entry["ugv"]["id"] = latest_casualty["id"]
@@ -186,7 +185,7 @@ def update_jackal_casualty_db(db_path, ugv_uav_threshold=7,ugv_ugv_threshold=2):
         new_entry["image_path"] = latest_casualty["image_path"]
         new_entry["action"] = "init_update"
         new_entry["casualty_id"] = len(matching_table)
-        new_entry["timestamp"] = rospy.Time.now().to_sec()
+        new_entry["timestamp"] = time_now
         matching_table.append(new_entry)
 
     with open(os.path.join(db_path, "matching_table.json"), "w") as f:

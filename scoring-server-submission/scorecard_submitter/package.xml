@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>scorecard_submitter</name>
   <version>0.0.1</version>
   <description>Package for submitting scorecard results to the server.</description>
@@ -11,15 +11,25 @@
   <license>BSD</license>
 
   <!-- Build tool -->
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
+  <!-- Build dependencies -->
+  <build_depend>rclpy</build_depend>
 
   <!-- Runtime dependencies -->
-  <exec_depend>rospy</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
+
+  <exec_depend>rclpy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
-  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend> 
   <exec_depend>sensor_msgs</exec_depend>
 
+  <!-- Python runtime dependencies-->
+  <exec_depend>python-utm</exec_depend>
+
   <export>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

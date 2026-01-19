@@ -1,34 +1,34 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.8)
 project(basestation_msgs)
 
-find_package(catkin REQUIRED COMPONENTS
-  std_msgs
-  sensor_msgs
-  nav_msgs
-  geometry_msgs
-  message_generation
-)
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
-add_message_files(
-  FILES
-  ServerReport.msg
-  InitialReport.msg
-  FullReport.msg
-)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-generate_messages(
+# Find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+# Generate messages
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/ServerReport.msg"
+  "msg/InitialReport.msg"
+  "msg/FullReport.msg"
   DEPENDENCIES
-  std_msgs
-  sensor_msgs
-  nav_msgs
-  geometry_msgs
+    std_msgs
+    sensor_msgs
+    nav_msgs
+    geometry_msgs
 )
 
-catkin_package(
-  CATKIN_DEPENDS 
-    std_msgs 
-    sensor_msgs 
-    nav_msgs 
-    geometry_msgs 
-    message_runtime
-)
+ament_package()

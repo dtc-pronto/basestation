@@ -1,0 +1,94 @@
+FROM osrf/ros:jazzy-desktop-full
+
+# install the basics
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+ vim \
+ tmux \
+ cmake \
+ gcc \
+ g++ \
+ git \
+ build-essential \
+ sudo \
+ wget \
+ curl \
+ zip \
+ unzip
+
+# add a user
+RUN userdel ubuntu
+ARG user_id
+ENV USER=dtc
+RUN useradd -U --uid ${user_id} -ms /bin/bash $USER \
+ && echo "$USER:$USER" | chpasswd \
+ && adduser $USER sudo \
+ && echo "$USER ALL=NOPASSWD: ALL" >> /etc/sudoers.d/$USER
+
+# bagging
+RUN apt install -y ros-jazzy-rosbag2-storage-mcap
+
+# configure ros network
+COPY ./zenoh.json5 /opt/zenoh.json5
+COPY ./zenoh-router.json5 /opt/zenoh-router.json5
+RUN apt install -y ros-jazzy-rmw-zenoh-cpp
+ENV RMW_IMPLEMENTATION=rmw_zenoh_cpp
+ENV ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
+ENV ZENOH_CONFIG=/opt/zenoh.json5
+
+# sensors, visualizer deps and rtk dependencies are not installed
+# MOCHA deps
+# Scorecard deps
+
+
+RUN apt-get update && apt-get install -y \
+    ros-jazzy-vision-opencv \
+    ros-jazzy-vision-msgs \
+    ros-jazzy-cv-bridge \
+    && rm -rf /var/lib/apt/lists/*
+    
+# python util
+RUN apt update \
+ && apt install -y python3-pip \
+ python3-venv \
+ python3-pytest \
+ python3-utm
+
+# python packages
+RUN apt-get update && apt-get install -y \
+    python3-flask \
+    python3-folium \
+    python3-flask-socketio \
+    python3-utm \
+    python3-scipy \
+    python3-dotenv \
+    python3-requests \
+    && rm -rf /var/lib/apt/lists/*
+
+# environment setup
+USER $USER
+WORKDIR /home/$USER
+RUN mkdir -p ws/src
+
+# COPY --chown=$USER:$USER common/dtc_msgs ws/src/dtc_msgs
+# COPY common/spoof-debugger ws/src/spoofer
+# COPY --chown=$USER:$USER scoring-server-submission/watchstate ws/src/MOCHA/interface_rajant/scripts/thirdParty/watchstate
+# COPY --chown=$USER:$USER scoring-server-submission/scorecard_submitter ws/src/scorecard_submitter
+# COPY --chown=$USER:$USER geoviz/ ws/src/geoviz
+# COPY --chown=$USER:$USER basestation-msgs ws/src/basestation-msgs
+COPY --chown=$USER:$USER ./entrypoint.bash entrypoint.bash
+RUN sudo chown $USER:$USER entrypoint.bash && chmod +x entrypoint.bash
+RUN sudo apt-get update && sudo apt-get install -y python3-pytest
+
+# env for the run.bash
+ENV MOCHA=false
+ENV RTK=false
+ENV SENDER=false
+ENV VIZ=false
+
+RUN sudo chown $USER:$USER ~/.bashrc \
+ && /bin/sh -c 'echo ". /opt/ros/jazzy/setup.bash" >> ~/.bashrc' \
+ && /bin/sh -c 'echo "source ~/ws/install/setup.bash" >> ~/.bashrc' \
+ && echo 'export PS1="\[$(tput setaf 2; tput bold)\]\u\[$(tput setaf 7)\]@\[$(tput setaf 3)\]\h\[$(tput setaf 7)\]:\[$(tput setaf 4)\]\W\[$(tput setaf 7)\]$ \[$(tput sgr0)\]"' >> ~/.bashrc
+
+ENTRYPOINT ["/home/dtc/entrypoint.bash"]

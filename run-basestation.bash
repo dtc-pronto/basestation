@@ -52,11 +52,16 @@ done
 xhost +
 docker run -it --rm \
     --network=host \
+    --ipc=host \
     --privileged \
     -v "/dev:/dev" \
     -v "/tmp/.X11-unix:/tmp/.X11-unix" \
-    -v "./common/config:/home/`whoami`/ws/src/MOCHA/mocha_core/config" \
-    -v "./data:/home/`whoami`/data" \
+    -v "./common/config:/home/dtc/ws/src/MOCHA/mocha_core/config" \
+    -v "./dtc-msgs:/home/dtc/ws/src/dtc-msgs" \
+    -v "./scoring-server-submission/watchstate:/home/dtc/ws/src/MOCHA/interface_rajant/scripts/thirdParty/watchstate" \
+    -v "./scoring-server-submission/scorecard_submitter:/home/dtc/ws/src/scorecard_submitter" \
+    -v "./basestation-msgs:/home/dtc/ws/src/basestation-msgs" \
+    -v "./common/scorecard_parser:/home/dtc/ws/src/scorecard_parser" \
     -e DISPLAY=$DISPLAY \
     -e QT_X11_NO_MITSHM=1 \
     -e XAUTHORITY=$XAUTH \
@@ -64,7 +69,7 @@ docker run -it --rm \
     -e RTK=$RTK_ENV \
     -e MOCHA=$MOCHA_ENV \
     -e SENDER=$SENDER_ENV \
-    --name dtc-basestation \
-    dtc-basestation:todos \
+    --name dtc-ros-jazzy-basestation \
+    ros-jazzy:basestation \
     bash
 xhost -
