@@ -66,7 +66,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # environment setup
-USER $USER
+USER    
 WORKDIR /home/$USER
 RUN mkdir -p ws/src
 
@@ -78,7 +78,6 @@ RUN mkdir -p ws/src
 # COPY --chown=$USER:$USER basestation-msgs ws/src/basestation-msgs
 COPY --chown=$USER:$USER ./entrypoint.bash entrypoint.bash
 RUN sudo chown $USER:$USER entrypoint.bash && chmod +x entrypoint.bash
-RUN sudo apt-get update && sudo apt-get install -y python3-pytest
 
 # env for the run.bash
 ENV MOCHA=false

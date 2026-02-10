@@ -9,7 +9,7 @@ def generate_launch_description():
             name='spoofer_node',
             output='screen',
             parameters=[
-                {'robots': ['deimos', 'phobos', 'dione']}
+                {'robots': ['deimos', 'phobos', 'titania', 'oberon', 'dione']}
             ]
         )
     ])

@@ -24,39 +24,50 @@ from typing import Dict, Tuple, List
 
 def initReport(node: Node) -> Dict:
     now = node.get_clock().now().nanoseconds / 1e9
+    hr = np.random.randint(60, 100)
+    rr = np.random.randint(12, 30)
+    alertness_ocular = np.random.randint(0, 1)
+    alertness_verbal = np.random.randint(0, 2)
+    alertness_motor = np.random.randint(0, 2)
+    severe_hemorrhage = np.random.randint(0, 1)
+    respiratory_distress = np.random.randint(0, 1)
+    trauma_head = np.random.randint(0, 2)
+    trauma_torso = np.random.randint(0, 2)
+    trauma_lower_ext = np.random.randint(0, 2)
+    trauma_upper_ext = np.random.randint(0, 2)
     return {
       "hr": {
-        "value": 0,
+        "value": hr,
         "time_ago": now
       },
       "rr": {
-        "value": 0,
+        "value": rr,
         "time_ago": now
       },
       "alertness_ocular": {
-        "value": 0,
+        "value": alertness_ocular,
         "time_ago": now
       },
       "alertness_verbal": {
-        "value": 0,
+        "value": alertness_verbal,
         "time_ago": now
       },
       "alertness_motor": {
-        "value": 0,
+        "value": alertness_motor,
         "time_ago": now
       },
       "severe_hemorrhage": {
-        "value": 0,
+        "value": severe_hemorrhage,
         "time_ago": now
       },
       "respiratory_distress": {
-        "value": 0,
+        "value": respiratory_distress,
         "time_ago": now
       },
-      "trauma_head": 0,
-      "trauma_torso": 0,
-      "trauma_lower_ext": 0,
-      "trauma_upper_ext": 0,
+      "trauma_head": trauma_head,
+      "trauma_torso": trauma_torso,
+      "trauma_lower_ext": trauma_lower_ext,
+      "trauma_upper_ext": trauma_upper_ext,
       "temp": {
         "value": 98,
         "time_ago": now
@@ -98,17 +109,17 @@ class ScoreCardSpoof(Node):
             self.phobos_timer_ = self.create_timer(2.0, self.phobosCallback)
             self.phobos_pub_ = self.create_publisher(ScoreCardString, "/phobos/report_status", 1)
             self.get_logger().info("Phobos timer created")
-            self.phobos_count_ = 2
+            self.phobos_count_ = 0
         if "titania" in robots:
             self.titania_timer_ = self.create_timer(1.0, self.titaniaCallback)
             self.titania_pub_ = self.create_publisher(ScoreCardString, "/titania/report_status", 1)
             self.get_logger().info("Titania timer created")
-            self.titania_count_ = 3
+            self.titania_count_ = 0
         if "oberon" in robots:
             self.oberon_timer_ = self.create_timer(8.0, self.oberonCallback)
             self.oberon_pub_ = self.create_publisher(ScoreCardString, "/oberon/report_status", 1)
             self.get_logger().info("Oberon timer created")
-            self.oberon_count_ = 1
+            self.oberon_count_ = 0
 
         if "dione" in robots:
             self.dione_timer_ = self.create_timer(3.0, self.dioneCallback)
