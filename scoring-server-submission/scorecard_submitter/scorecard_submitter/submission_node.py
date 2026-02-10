@@ -192,17 +192,17 @@ class SubmissionNode(Node):
         msg = ServerReport()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.code = r.status_code
-        msg.report.data = json.dumps(r.json())
-        msg.robot.data = robot
+        msg.report = json.dumps(r.json())
+        msg.robot = robot
 
         self.server_pub_.publish(msg)
 
     def publishInitialReport(self, cid : int, lat : float, lon : float, time : float) -> None:
         msg = InitialReport()
-        msg.casualty_id = cid
-        msg.latitude = lat 
-        msg.longitude = lon
-        msg.time_ago= time
+        msg.casualty_id = int(cid)
+        msg.latitude = float(lat)
+        msg.longitude = float(lon)
+        msg.time_ago = float(time)
 
         self.initial_pub_.publish(msg)
 
@@ -306,10 +306,10 @@ class SubmissionNode(Node):
         return r
         
 
-    def publishFullReport(self, cid : int, report : str, image_path : str) -> None:
+    def publishFullReport(self, cid : int, report : Dict, image_path : str) -> None:
         msg = FullReport()
         msg.casualty_id = cid
-        msg.report.data = json.dumps(report)
+        msg.report = json.dumps(report)
         img = cv2.imread(image_path)
         cimg = self.createCompressedImageMsg(img)
         msg.image = cimg

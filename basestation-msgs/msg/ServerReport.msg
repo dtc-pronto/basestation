@@ -1,4 +1,4 @@
 std_msgs/Header header
-std_msgs/String report
-std_msgs/String robot
+string report
+string robot
 uint32 code

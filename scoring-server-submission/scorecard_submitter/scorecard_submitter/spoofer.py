@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
     Jason Hughes
     September 2025
@@ -85,29 +86,34 @@ class ScoreCardSpoof(Node):
         self.fix_arr_ = list()
         
         # Declare and get the robots parameter
-        self.declare_parameter('robots', [])
+        self.declare_parameter('robots', [''])
         robots = self.get_parameter('robots').value
 
         if "deimos" in robots:
             self.deimos_timer_ = self.create_timer(7.0, self.deimosCallback)
             self.deimos_pub_ = self.create_publisher(ScoreCardString, "/deimos/report_status", 1)
+            self.get_logger().info("Deimos timer created")
             self.deimos_count_ = 0
         if "phobos" in robots:
             self.phobos_timer_ = self.create_timer(2.0, self.phobosCallback)
             self.phobos_pub_ = self.create_publisher(ScoreCardString, "/phobos/report_status", 1)
+            self.get_logger().info("Phobos timer created")
             self.phobos_count_ = 2
         if "titania" in robots:
             self.titania_timer_ = self.create_timer(1.0, self.titaniaCallback)
             self.titania_pub_ = self.create_publisher(ScoreCardString, "/titania/report_status", 1)
+            self.get_logger().info("Titania timer created")
             self.titania_count_ = 3
         if "oberon" in robots:
             self.oberon_timer_ = self.create_timer(8.0, self.oberonCallback)
             self.oberon_pub_ = self.create_publisher(ScoreCardString, "/oberon/report_status", 1)
+            self.get_logger().info("Oberon timer created")
             self.oberon_count_ = 1
 
         if "dione" in robots:
             self.dione_timer_ = self.create_timer(3.0, self.dioneCallback)
             self.dione_pub_ = self.create_publisher(CasualtyFixArray, "/dione/casualty_info", 1)
+            self.get_logger().info("Dione timer created")
             self.dione_count_ = 0
             
 
@@ -164,43 +170,53 @@ class ScoreCardSpoof(Node):
         msg.casualty_id = count
         msg.location.latitude = coords[0]
         msg.location.longitude = coords[1]
-        msg.time_ago.data = self.get_clock().now().to_msg()
+        msg.time_ago = self.get_clock().now().to_msg()
 
         return msg
 
     def deimosCallback(self) -> None:
-        self.get_logger().info("Spoofing Deimos")
-        if self.deimos_count_ == 4: return
+        if self.deimos_count_ == 4:
+            self.deimos_timer_.cancel()
+            return
         msg = self.createRandomMsg(self.deimos_count_, "deimos")
+        self.get_logger().info("Spoofing Deimos")
         self.deimos_pub_.publish(msg)
         self.deimos_count_+=1
 
     def phobosCallback(self) -> None:
-        if self.phobos_count_ == 4: return
-        self.get_logger().info("Spoofing Phobos")
+        if self.phobos_count_ == 4:
+            self.phobos_timer_.cancel()
+            return
         msg = self.createRandomMsg(self.phobos_count_, "phobos")
+        self.get_logger().info("Spoofing Phobos")
         self.phobos_pub_.publish(msg)
         self.phobos_count_+=1
 
-    def titaniaCallback(self) -> None: 
-        self.get_logger().info("Spoofing Titania")
-        if self.titania_count_ == 4: return
+    def titaniaCallback(self) -> None:
+        if self.titania_count_ == 4:
+            self.titania_timer_.cancel()
+            return
         msg = self.createRandomMsg(self.titania_count_, "titania")
+        self.get_logger().info("Spoofing Titania")
         self.titania_pub_.publish(msg)
         self.titania_count_+=1
 
     def oberonCallback(self) -> None:
-        self.get_logger().info("Spoofing Oberon")
-        if self.oberon_count_ == 4: return
+        if self.oberon_count_ == 4:
+            self.oberon_timer_.cancel()
+            return
         msg = self.createRandomMsg(self.oberon_count_, "oberon")
+        self.get_logger().info("Spoofing Oberon")
         self.oberon_pub_.publish(msg)
         self.oberon_count_+=1
 
     def dioneCallback(self) -> None:
-        self.get_logger().info("Spoofing Dione")
-        if self.dione_count_ == 4: return
+        if self.dione_count_ == 4:
+            self.dione_timer_.cancel()
+            return
 
         msg = self.createCasualtyFix(self.dione_count_)
+        self.get_logger().info("Spoofing Dione")
 
         self.fix_arr_.append(msg)
 

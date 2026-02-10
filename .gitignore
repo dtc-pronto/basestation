@@ -41,7 +41,9 @@ venv.bak/
 *.swo
 *~
 
+# Rosbags and data
 *.bag
+rosbags/
 data/
 
 # zenoh-router

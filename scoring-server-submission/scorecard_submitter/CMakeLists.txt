@@ -34,6 +34,7 @@ install(
   FILES
   scorecard_submitter/helpers.py
   scorecard_submitter/submission.py
+  scorecard_submitter/.env
   DESTINATION lib/${PROJECT_NAME}
 )
 

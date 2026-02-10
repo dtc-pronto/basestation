@@ -38,7 +38,7 @@ def submit_image(image_path, time, time_now, id):
 
 
 def convert_to_enum(value, key=None):
-    value = value.lower()
+    # value = value.lower()
 
     binary_keys = {
         "severe_hemorrhage": {"absence": 0, "presence": 1},
@@ -248,39 +248,48 @@ def parse_report_string_as_json(report_str, time_now:str):
     payload = {
       "hr": {
         "value": data["hr"]["value"],
-        "time_ago":  data["hr"]["timestamp"] if data["hr"]["timestamp"] > 0 else time_now,
+        "time_ago":  data["hr"]["time_ago"] if data["hr"]["time_ago"] > 0 else time_now,
       },
       "rr": {
         "value": data["rr"]["value"],
-        "time_ago":  data["rr"]["timestamp"] if data["rr"]["timestamp"] > 0 else time_now,
+        "time_ago":  data["rr"]["time_ago"] if data["rr"]["time_ago"] > 0 else time_now,
       },
       "alertness_ocular": {
-        "value": convert_to_enum(data["alertness_ocular"]["value"], "alertness_ocular"),
-        "time_ago":  data["alertness_ocular"]["timestamp"] if data["alertness_ocular"]["timestamp"] > 0 else time_now,
+        # "value": convert_to_enum(data["alertness_ocular"]["value"], "alertness_ocular"),
+        "value": data["alertness_ocular"]["value"],
+        "time_ago":  data["alertness_ocular"]["time_ago"] if data["alertness_ocular"]["time_ago"] > 0 else time_now,
       },
       "alertness_verbal": {
-        "value": convert_to_enum(data["alertness_verbal"]["value"], "alertness_verbal"),
-        "time_ago":  data["alertness_verbal"]["timestamp"] if data["alertness_verbal"]["timestamp"] > 0 else time_now,
+        # "value": convert_to_enum(data["alertness_verbal"]["value"], "alertness_verbal"),
+        "value": data["alertness_verbal"]["value"],
+        "time_ago":  data["alertness_verbal"]["time_ago"] if data["alertness_verbal"]["time_ago"] > 0 else time_now,
       },
       "alertness_motor": {
-        "value": convert_to_enum(data["alertness_motor"]["value"], "alertness_motor"),
-        "time_ago":  data["alertness_motor"]["timestamp"] if data["alertness_motor"]["timestamp"] > 0 else time_now,
+        # "value": convert_to_enum(data["alertness_motor"]["value"], "alertness_motor"),
+        "value": data["alertness_motor"]["value"],
+        "time_ago":  data["alertness_motor"]["time_ago"] if data["alertness_motor"]["time_ago"] > 0 else time_now,
       },
       "severe_hemorrhage": {
-        "value": convert_to_enum(data["severe_hemorrhage"]["value"], "severe_hemorrhage"),
-        "time_ago":  data["severe_hemorrhage"]["timestamp"] if data["severe_hemorrhage"]["timestamp"] > 0 else time_now,
+        # "value": convert_to_enum(data["severe_hemorrhage"]["value"], "severe_hemorrhage"),
+        "value": data["severe_hemorrhage"]["value"],
+        "time_ago":  data["severe_hemorrhage"]["time_ago"] if data["severe_hemorrhage"]["time_ago"] > 0 else time_now,
       },
       "respiratory_distress": {
-        "value": convert_to_enum(data["respiratory_distress"], "respiratory_distress"),
-        "time_ago":  data["severe_hemorrhage"]["timestamp"] if data["severe_hemorrhage"]["timestamp"] > 0 else time_now,
+        # "value": convert_to_enum(data["respiratory_distress"]["value"], "respiratory_distress"),
+        "value": data["respiratory_distress"]["value"],
+        "time_ago":  data["respiratory_distress"]["time_ago"] if data["respiratory_distress"]["time_ago"] > 0 else time_now,
       },
-      "trauma_head": convert_to_enum(data["trauma_head"], "trauma_head"),
-      "trauma_torso": convert_to_enum(data["trauma_torso"], "trauma_torso"),
-      "trauma_lower_ext": convert_to_enum(data["trauma_lower_ext"], "trauma_lower_ext"),
-      "trauma_upper_ext": convert_to_enum(data["trauma_upper_ext"], "trauma_upper_ext"),
+      # "trauma_head": convert_to_enum(data["trauma_head"], "trauma_head"),
+      # "trauma_torso": convert_to_enum(data["trauma_torso"], "trauma_torso"),
+      # "trauma_lower_ext": convert_to_enum(data["trauma_lower_ext"], "trauma_lower_ext"),
+      # "trauma_upper_ext": convert_to_enum(data["trauma_upper_ext"], "trauma_upper_ext"),
+      'trauma_head': data["trauma_head"],
+      'trauma_torso': data["trauma_torso"],
+      'trauma_lower_ext': data["trauma_lower_ext"],
+      'trauma_upper_ext': data["trauma_upper_ext"],
       "temp": {
         "value": 98,
-        "time_ago":  data["temp"]["timestamp"] if data["temp"]["timestamp"] > 0 else time_now,
+        "time_ago":  data["temp"]["time_ago"] if data["temp"]["time_ago"] > 0 else time_now,
       },
       "casualty_id": data["casualty_id"],
       "team": data["team"],
@@ -288,7 +297,7 @@ def parse_report_string_as_json(report_str, time_now:str):
       "location": {
         "latitude": data["location"]["latitude"],
         "longitude": data["location"]["longitude"],
-        "time_ago":  data["location"]["timestamp"] if data["location"]["timestamp"] > 0 else time_now,
+        "time_ago":  data["location"]["time_ago"] if data["location"]["time_ago"] > 0 else time_now,
       }
     }
     return payload

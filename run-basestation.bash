@@ -62,6 +62,7 @@ docker run -it --rm \
     -v "./scoring-server-submission/scorecard_submitter:/home/dtc/ws/src/scorecard_submitter" \
     -v "./basestation-msgs:/home/dtc/ws/src/basestation-msgs" \
     -v "./common/scorecard_parser:/home/dtc/ws/src/scorecard_parser" \
+    -v "./rosbags:/home/dtc/ws/rosbags" \
     -e DISPLAY=$DISPLAY \
     -e QT_X11_NO_MITSHM=1 \
     -e XAUTHORITY=$XAUTH \

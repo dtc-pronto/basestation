@@ -1,1 +1,1 @@
-docker exec -it dtc-basestation bash
+docker exec -it dtc-ros-jazzy-basestation bash
