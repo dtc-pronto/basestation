@@ -8,7 +8,7 @@ import ast
 total_init_pos = 0
 total_init_supp = 0
 total_update = 0
-#TODO: add casulty_id, team, system, time_ago to submit_scorecard and submit_image functions
+
 def submit_image(image_path, time, time_now, id):
     # Load .env file
     load_dotenv()
@@ -67,24 +67,209 @@ def convert_to_enum(value, key=None):
     
     return None  # or raise an error
 
-def start_run():
+def start_run(content: dict):
     load_dotenv()
     print("Creating new run...")
     TOKEN = os.getenv("TOKEN")
     BASE_URL = os.getenv("BASE_URL")
 
     url = f"{BASE_URL}/api/run/new"
-    headers = {"accept": "application/json"}
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
 
-    r = requests.get(url, headers=headers)
+    r = requests.post(url, headers=headers, json=content)
     print(r.status_code, r.json())
 
     print("Starting run...")
     url = f"{BASE_URL}/api/run/start"
     headers = {"accept": "application/json"}
-    
-    response = requests.get(url, headers=headers)
-    print(response.status_code, r.json())
+
+    response = requests.post(url, headers=headers)
+    print(response.status_code, response.json())
+    return response
+
+def post_system_location(lat, lon, alt, system, type):
+    load_dotenv()
+    print("Posting system location...")
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+
+    url = f"{BASE_URL}/api/system_location"
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
+
+    content = {
+      "team": "PennPRONTO",
+      "system": system,
+      "type": type,
+      "latitude": lat,
+      "longitude": lon,
+      "altitude": alt
+    }
+
+    r = requests.post(url, headers=headers, json=content)
+    print(r.status_code, r.json())
+    return r
+
+def location_report(lat, lon, level, id, system):
+    load_dotenv()
+    print("Posting location report...")
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+
+    url = f"{BASE_URL}/api/location_report"
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
+
+    content = {
+      "latitude": lat,
+      "longitude": lon,
+      "level": level,
+      "casualty_id": id,
+      "team": "PennPRONTO",
+      "system": system
+    }
+
+    r = requests.post(url, headers=headers, json=content)
+    print(r.status_code, r.json())
+    return r
+
+def triage_report(category, id, system):
+    load_dotenv()
+    print("Posting triage report...")
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+
+    url = f"{BASE_URL}/api/triage"
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
+
+    content = {
+      "category": category,
+      "casualty_id": id,
+      "team": "PennPRONTO",
+      "system": system
+    }
+
+    r = requests.post(url, headers=headers, json=content)
+    print(r.status_code, r.json())
+    return r
+
+def trauma_report(type, value, time_ago, id, system):
+    load_dotenv()
+    print("Posting trauma report...")
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+
+    url = f"{BASE_URL}/api/trauma"
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
+
+    content = {
+      "type": type,
+      "value": value,
+      "time_ago": time_ago,
+      "casualty_id": id,
+      "team": "PennPRONTO",
+      "system": system
+    }
+
+    r = requests.post(url, headers=headers, json=content)
+    print(r.status_code, r.json())
+    return r
+
+def vitals_report(type, value, time_ago, id, system):
+    load_dotenv()
+    print("Posting vitals report...")
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+
+    url = f"{BASE_URL}/api/vitals"
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
+
+    content = {
+      "type": type,
+      "value": value,
+      "time_ago": time_ago,
+      "casualty_id": id,
+      "team": "PennPRONTO",
+      "system": system
+    }
+
+    r = requests.post(url, headers=headers, json=content)
+    print(r.status_code, r.json())
+    return r
+
+def hmt_location_report(lat, lon, category, time_ago, id, system):
+    load_dotenv()
+    print("Posting HMT location report...")
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+
+    url = f"{BASE_URL}/api/hmt/casualty"
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
+
+    content = {
+      "latitude": lat,
+      "longitude": lon,
+      "category": category,
+      "time_ago": time_ago,
+      "casualty_id": id,
+      "team": "PennPRONTO",
+      "system": system
+    }
+
+    r = requests.post(url, headers=headers, json=content)
+    print(r.status_code, r.json())
+    return r
+
+def hmt_assessment_report(type, value, time_ago, id, system):
+    load_dotenv()
+    print("Posting HMT assessment report...")
+    TOKEN = os.getenv("TOKEN")
+    BASE_URL = os.getenv("BASE_URL")
+
+    url = f"{BASE_URL}/api/hmt/assessment"
+    headers = {
+        "accept": "application/json",
+        "Authorization": TOKEN,
+        "Content-Type": "application/json"
+    }
+
+    content = {
+      "type": type,
+      "value": value,
+      "time_ago": time_ago,
+      "casualty_id": id,
+      "team": "PennPRONTO",
+      "system": system
+    }
+
+    r = requests.post(url, headers=headers, json=content)
+    print(r.status_code, r.json())
     return r
 
 def update_casualty(id, payload, time_now):

@@ -16,55 +16,22 @@ import os
 def generate_launch_description():
     """Generate launch description for scorecard submission node"""
     
-    # Declare launch arguments
-    threshold_path_arg = DeclareLaunchArgument(
-        'threshold_path',
-        default_value=PathJoinSubstitution([
-            FindPackageShare('scorecard_submitter'),
-            'config',
-            'threshold_config.json'
-        ]),
-        description='Path to threshold configuration JSON file'
-    )
+    # Path to the YAML parameters file
+    params_file = PathJoinSubstitution([
+        FindPackageShare('scorecard_submitter'),
+        'config',
+        'scorecard_params.yaml'
+    ])
     
-    data_path_arg = DeclareLaunchArgument(
-        'data_path',
-        default_value='/home/dtc/data',
-        description='Path to data directory for storing casualty databases'
-    )
-    
-    start_run_arg = DeclareLaunchArgument(
-        'start_run',
-        default_value='false',
-        description='Whether to start the run immediately'
-    )
-    
-    robots_arg = DeclareLaunchArgument(
-        'robots',
-        default_value='["dione", "deimos", "phobos", "titania", "oberon"]',
-        description='List of robots to monitor (JSON array format)'
-    )
-    
-    # Create node with parameters
+    # Create node with parameters loaded from YAML file
     scorecard_submission_node = Node(
         package='scorecard_submitter',
         executable='submission_node.py',
         name='scorecard_submission_node',
-        output='screen',
-        parameters=[{
-            'threshold_path': LaunchConfiguration('threshold_path'),
-            'data_path': LaunchConfiguration('data_path'),
-            'start_run': LaunchConfiguration('start_run'),
-            'robots': LaunchConfiguration('robots'),
-        }],
-        # Make the node required (will shutdown launch if node exits)
-        on_exit=None,  # Can be set to Shutdown() for required behavior
+        parameters=[params_file],
+        on_exit=None,
     )
     
     return LaunchDescription([
-        threshold_path_arg,
-        data_path_arg,
-        start_run_arg,
-        robots_arg,
         scorecard_submission_node,
     ])

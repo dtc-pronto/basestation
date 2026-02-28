@@ -1,23 +1,32 @@
-# ROS2 Parameters for Scorecard Submission Node
-# These parameters can be loaded when launching the node
+# ROS2 Parameters for Scorecard Submission System.
 
-scorecard_submission_node:
+# Shared robot list - referenced in each node's parameters
+# Valid robot names: dione (UAV), deimos, phobos, titania, oberon (UGVs)
+
+system_location_submission:
   ros__parameters:
-    # Whether to start the scoring run immediately when node starts
     start_run: false
-    
-    # Path to the threshold configuration JSON file
-    # This file contains distance thresholds for matching casualties
+    system_location_rate: 4
     threshold_path: "/home/dtc/ws/src/scorecard_submitter/config/threshold_config.json"
-    
-    # Path to the data directory where casualty databases will be stored
     data_path: "/home/dtc/data"
-    
-    # List of robots to monitor for casualty reports
-    # Valid robot names: dione (UAV), deimos, phobos, titania, oberon (UGVs)
-    robots:
-      - dione
-      - deimos
-      - phobos
-      - titania
-      - oberon
+    robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+
+gate1_node:
+  ros__parameters:
+    robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+
+gate2_node:
+  ros__parameters:
+    robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+
+gate3_node:
+  ros__parameters:
+    robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+
+gate4_node:
+  ros__parameters:
+    robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+
+hmt_node:
+  ros__parameters:
+    robot_names: ["dione", "deimos", "phobos", "titania ", "oberon"]

@@ -7,9 +7,6 @@ script_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(script_dir)
 
 import threading 
-import subprocess
-import time
-import ast
 import json
 import rclpy
 from rclpy.node import Node
