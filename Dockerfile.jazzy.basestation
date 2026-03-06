@@ -66,7 +66,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # environment setup
-USER    
+USER dtc
 WORKDIR /home/$USER
 RUN mkdir -p ws/src
 

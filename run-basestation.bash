@@ -64,6 +64,7 @@ docker run -it --rm \
     -v "./basestation-msgs:/home/dtc/ws/src/basestation-msgs" \
     -v "./common/scorecard_parser:/home/dtc/ws/src/scorecard_parser" \
     -v "./rosbags:/home/dtc/ws/rosbags" \
+    -v "./launch_scripts:/home/dtc/ws/launch_scripts" \
     -e DISPLAY=$DISPLAY \
     -e QT_X11_NO_MITSHM=1 \
     -e XAUTHORITY=$XAUTH \

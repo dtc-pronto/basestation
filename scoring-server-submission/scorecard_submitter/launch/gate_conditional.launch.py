@@ -15,10 +15,10 @@ def generate_launch_description():
         'scorecard_params.yaml'
     ])
 
-    Gate_1_condition = DeclareLaunchArgument('gate_1', default_value='false'),
-    Gate_2_condition = DeclareLaunchArgument('gate_2', default_value='false'),
-    Gate_3_condition = DeclareLaunchArgument('gate_3', default_value='false'),
-    Gate_4_condition = DeclareLaunchArgument('gate_4', default_value='false'),
+    Gate_1_condition = DeclareLaunchArgument('gate_1', default_value='false')
+    Gate_2_condition = DeclareLaunchArgument('gate_2', default_value='false')
+    Gate_3_condition = DeclareLaunchArgument('gate_3', default_value='false')
+    Gate_4_condition = DeclareLaunchArgument('gate_4', default_value='false')
     HMT_condition = DeclareLaunchArgument('hmt', default_value='false')
 
     gate_1_node = Node(
@@ -60,11 +60,26 @@ def generate_launch_description():
             condition=IfCondition(LaunchConfiguration('hmt')),
             parameters=[params_file]
         )
-    
+
+    atak_report_node = Node(
+            package='scorecard_submitter',
+            executable='atak_report_node.py',
+            name='atak_report_node',
+            condition=IfCondition(LaunchConfiguration('hmt')),
+            parameters=[params_file]
+        )
+
     system_location_node = Node(
             package='scorecard_submitter',
             executable='system_location_sub.py',
             name='system_location_submission_node',
+            parameters=[params_file]
+        )
+
+    casualty_image_node = Node(
+            package='scorecard_submitter',
+            executable='casualty_image_node.py',
+            name='casualty_image_node',
             parameters=[params_file]
         )
 
@@ -81,5 +96,7 @@ def generate_launch_description():
         gate_3_node,
         gate_4_node,
         hmt_node,
-        system_location_node
+        atak_report_node,
+        system_location_node,
+        casualty_image_node,
     ])

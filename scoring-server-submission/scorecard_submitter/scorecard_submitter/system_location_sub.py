@@ -39,7 +39,7 @@ class SystemLocationSub(Node):
         self.subscription_list = [] 
 
         self.declare_parameter('run_content_path', '')
-        run_content_path = self.get_parameter('run_content_path', '').value
+        run_content_path = self.get_parameter('run_content_path').value
         content = {}
         if run_content_path:
             with open(run_content_path, 'r') as f:
@@ -104,3 +104,19 @@ class SystemLocationSub(Node):
                 self.get_logger().error(f"Failed to post location for {robot}: {response.status_code} - {response.text}")
 
         return response
+    
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = SystemLocationSub()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()

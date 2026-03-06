@@ -32,6 +32,8 @@ install(PROGRAMS
   scorecard_submitter/vital_report_sub.py
   scorecard_submitter/system_location_sub.py
   scorecard_submitter/hmt_node.py
+  scorecard_submitter/atak_report_node.py
+  scorecard_submitter/casualty_image_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

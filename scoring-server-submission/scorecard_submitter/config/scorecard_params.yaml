@@ -38,3 +38,13 @@ hmt_node:
   ros__parameters:
     robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
     gps_threshold: 5.0
+
+atak_report_node:
+  ros__parameters:
+    robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+    gps_threshold: 5.0
+
+casualty_image_node:
+  ros__parameters:
+    robot_names: ["deimos", "phobos", "titania", "oberon"]
+    image_save_path: "/tmp/casualty_images"
