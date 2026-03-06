@@ -26,6 +26,11 @@ ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scorecard_submitter/submission_node.py
   scorecard_submitter/spoofer.py
+  scorecard_submitter/casualty_location_sub.py
+  scorecard_submitter/triage_report_sub.py
+  scorecard_submitter/assessement_report_sub.py
+  scorecard_submitter/vital_report_sub.py
+  scorecard_submitter/system_location_sub.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

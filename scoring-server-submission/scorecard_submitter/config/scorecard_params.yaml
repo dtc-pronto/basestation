@@ -14,19 +14,25 @@ system_location_submission:
 gate1_node:
   ros__parameters:
     robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+    threshold_path: "/home/dtc/ws/src/scorecard_submitter/config/threshold_config.json"
 
 gate2_node:
   ros__parameters:
-    robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+    robot_names: ["deimos", "phobos", "titania", "oberon"]
+    casualty_id_path: "/home/dtc/ws/src/scorecard_submitter/config/casualty_ids.json"
+    gps_threshold: 5.0
 
 gate3_node:
   ros__parameters:
-    robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+    robot_names: ["deimos", "phobos", "titania", "oberon"]
+    casualty_id_path: "/home/dtc/ws/src/scorecard_submitter/config/casualty_ids.json"
+    gps_threshold: 5.0
 
 gate4_node:
   ros__parameters:
     robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+    threshold_path: "/home/dtc/ws/src/scorecard_submitter/config/threshold_config.json"
 
 hmt_node:
   ros__parameters:
-    robot_names: ["dione", "deimos", "phobos", "titania ", "oberon"]
+    robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
