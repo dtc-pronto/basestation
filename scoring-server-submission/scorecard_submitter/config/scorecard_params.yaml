@@ -31,7 +31,8 @@ gate3_node:
 
 gate4_node:
   ros__parameters:
-    robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+    robot_names: ["deimos", "phobos", "titania", "oberon"]
+    casualty_id_path: "/home/dtc/ws/src/scorecard_submitter/config/casualty_ids.json"
     gps_threshold: 5.0
 
 hmt_node:

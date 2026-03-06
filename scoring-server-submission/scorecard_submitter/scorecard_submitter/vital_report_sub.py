@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-import threading
 import json
 
-from dtc_msgs.msg import CasualtyFixArray, HeartRate, RespirationRate
+from dtc_msgs.msg import HeartRate, RespirationRate
 from helpers import gps_distance
 from submission import vitals_report
 
 
-UAV = ['dione']
 UGV = ['deimos', 'phobos', 'titania', 'oberon']
 
 
@@ -17,98 +15,73 @@ class VitalsReportNode(Node):
     def __init__(self):
         super().__init__('gate4_node')
 
-        self.declare_parameter('robot_names', ['dione', 'deimos', 'phobos', 'titania', 'oberon'])
+        self.declare_parameter('robot_names', ['deimos', 'phobos', 'titania', 'oberon'])
+        self.declare_parameter('casualty_id_path', '')
         self.declare_parameter('gps_threshold', 5.0)
 
         self.robots = self.get_parameter('robot_names').value
-        self.threshold = self.get_parameter('gps_threshold').value
-        self.get_logger().info(f"GPS match threshold: {self.threshold}m")
+        self.gps_threshold = self.get_parameter('gps_threshold').value
 
-        # UAV detections: list of {casualty_id, lat, lon}
-        self.uav_detections = []
-        self.mutex = threading.Lock()
+        casualty_id_path = self.get_parameter('casualty_id_path').value
+        self.casualty_ids = []
+        if casualty_id_path:
+            with open(casualty_id_path, 'r') as f:
+                self.casualty_ids = json.load(f)
+            self.get_logger().info(
+                f"Loaded {len(self.casualty_ids)} casualty IDs from {casualty_id_path}"
+            )
+        else:
+            self.get_logger().warn("No casualty_id_path set — GPS matching will always fail")
 
         self.subscriptions_list = []
         for robot in self.robots:
-            if robot in UAV:
-                self.subscriptions_list.append(self.create_subscription(
-                    CasualtyFixArray,
-                    f"/{robot}/casualty_info",
-                    lambda msg, r=robot: self.uav_callback(msg, r),
-                    10))
-                self.get_logger().info(f"Subscribed to /{robot}/casualty_info (UAV)")
-            elif robot in UGV:
+            if robot in UGV:
                 self.subscriptions_list.append(self.create_subscription(
                     HeartRate,
                     f"/{robot}/heart_rate",
                     lambda msg, r=robot: self.hr_callback(msg, r),
                     10))
-                self.get_logger().info(f"Subscribed to /{robot}/heart_rate")
                 self.subscriptions_list.append(self.create_subscription(
                     RespirationRate,
                     f"/{robot}/respiration_rate",
                     lambda msg, r=robot: self.rr_callback(msg, r),
                     10))
-                self.get_logger().info(f"Subscribed to /{robot}/respiration_rate")
+                self.get_logger().info(
+                    f"Subscribed to /{robot}/heart_rate and /{robot}/respiration_rate"
+                )
 
-    def uav_callback(self, msg: CasualtyFixArray, robot: str):
-        with self.mutex:
-            self.uav_detections = [
-                {
-                    "casualty_id": c.casualty_id,
-                    "lat": c.location.latitude,
-                    "lon": c.location.longitude,
-                }
-                for c in msg.casualties
-            ]
-        self.get_logger().info(f"[{robot}] Updated UAV table: {len(self.uav_detections)} casualties")
-
-    def _match_or_create(self, lat, lon):
-        """
-        GPS-match against UAV detections. If no match within threshold, create a new
-        entry with the next available ID so future reports near the same spot reuse it.
-        Returns (casualty_id, dist, is_new).
-        """
-        with self.mutex:
-            min_dist = float('inf')
-            matched = None
-            for det in self.uav_detections:
-                try:
-                    d = gps_distance(lat, lon, det['lat'], det['lon'])
-                except ValueError:
-                    continue
-                if d < min_dist:
-                    min_dist = d
-                    matched = det
-
-            if matched is not None and min_dist <= self.threshold:
-                return matched['casualty_id'], min_dist, False
-
-            new_id = len(self.uav_detections)
-            self.uav_detections.append({"casualty_id": new_id, "lat": lat, "lon": lon})
-            return new_id, min_dist, True
+    def _resolve_casualty_id(self, lat, lon):
+        min_dist = float('inf')
+        matched_id = None
+        for entry in self.casualty_ids:
+            try:
+                d = gps_distance(lat, lon, entry['lat'], entry['lon'])
+            except ValueError:
+                continue
+            if d < min_dist:
+                min_dist = d
+                matched_id = entry['casualty_id']
+        if matched_id is None or min_dist > self.gps_threshold:
+            return None, min_dist
+        return matched_id, min_dist
 
     def _submit_vitals(self, lat: float, lon: float, vital_type: str, rate: float,
                        time_ago_stamp, robot: str):
-        casualty_id, dist, is_new = self._match_or_create(lat, lon)
-
-        if is_new:
+        casualty_id, dist = self._resolve_casualty_id(lat, lon)
+        if casualty_id is None:
             self.get_logger().warn(
-                f"[{robot}] No UAV match within {self.threshold}m "
-                f"(closest: {dist:.1f}m) — creating new casualty ID {casualty_id}"
+                f"[{robot}] No casualty match within {self.gps_threshold}m "
+                f"(closest: {dist:.1f}m) — dropping {vital_type} report"
             )
-        else:
-            self.get_logger().info(
-                f"[{robot}] Matched casualty {casualty_id} at {dist:.1f}m"
-            )
+            return
 
         now_sec = self.get_clock().now().nanoseconds / 1e9
         measurement_sec = time_ago_stamp.sec + time_ago_stamp.nanosec / 1e9
         time_ago = max(now_sec - measurement_sec, 0.0)
 
         self.get_logger().info(
-            f"[{robot}] Submitting {vital_type}={rate:.2f} time_ago={time_ago:.1f}s "
-            f"for casualty {casualty_id}"
+            f"[{robot}] Matched casualty {casualty_id} at {dist:.1f}m, "
+            f"{vital_type}={rate:.2f} time_ago={time_ago:.1f}s"
         )
         r = vitals_report(type=vital_type, value=rate, time_ago=time_ago,
                           id=casualty_id, system=robot)
