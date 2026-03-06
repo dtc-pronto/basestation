@@ -91,6 +91,8 @@ def start_run(content: dict):
     print(response.status_code, response.json())
     return response
 
+# All gates and lanes
+# type: 0 for UGV, 1 for UAV
 def post_system_location(lat, lon, alt, system, type):
     load_dotenv()
     print("Posting system location...")
@@ -117,6 +119,7 @@ def post_system_location(lat, lon, alt, system, type):
     print(r.status_code, r.json())
     return r
 
+# Gate 1: Location report
 def location_report(lat, lon, level, id, system):
     load_dotenv()
     print("Posting location report...")
@@ -143,6 +146,7 @@ def location_report(lat, lon, level, id, system):
     print(r.status_code, r.json())
     return r
 
+# Gate 2: Triage report
 def triage_report(category, id, system):
     load_dotenv()
     print("Posting triage report...")
@@ -167,6 +171,7 @@ def triage_report(category, id, system):
     print(r.status_code, r.json())
     return r
 
+# Gate 3: Trauma report
 def trauma_report(type, value, time_ago, id, system):
     load_dotenv()
     print("Posting trauma report...")
@@ -193,6 +198,7 @@ def trauma_report(type, value, time_ago, id, system):
     print(r.status_code, r.json())
     return r
 
+# Gate 4: Vitals report
 def vitals_report(type, value, time_ago, id, system):
     load_dotenv()
     print("Posting vitals report...")
@@ -219,6 +225,7 @@ def vitals_report(type, value, time_ago, id, system):
     print(r.status_code, r.json())
     return r
 
+# Lane 2: Human Machine Teaming (HMT) Location report
 def hmt_location_report(lat, lon, category, time_ago, id, system):
     load_dotenv()
     print("Posting HMT location report...")

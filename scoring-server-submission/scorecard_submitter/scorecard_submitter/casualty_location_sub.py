@@ -18,16 +18,10 @@ class CasualtyLocationSub(Node):
         super().__init__('gate1_node')
 
         self.declare_parameter('robot_names', ['dione', 'deimos', 'phobos', 'titania', 'oberon'])
-        self.declare_parameter('threshold_path', '')
+        self.declare_parameter('gps_threshold', 5.0)
 
         self.robots = self.get_parameter('robot_names').value
-
-        self.threshold = 5.0
-        threshold_path = self.get_parameter('threshold_path').value
-        if threshold_path:
-            with open(threshold_path, 'r') as f:
-                config = json.load(f)
-            self.threshold = config.get('ugv_uav_distance_threshold', 5.0)
+        self.threshold = self.get_parameter('gps_threshold').value
         self.get_logger().info(f"GPS match threshold: {self.threshold}m")
 
         # UAV detections: list of {casualty_id, lat, lon}
@@ -63,54 +57,49 @@ class CasualtyLocationSub(Node):
             ]
         self.get_logger().info(f"[{robot}] Updated matching table: {len(self.uav_detections)} casualties")
 
-        # Submit location for each UAV detection directly
-        for det in self.uav_detections:
-            r = location_report(
-                lat=det['lat'],
-                lon=det['lon'],
-                level=1,
-                id=det['casualty_id'],
-                system=robot
-            )
-            if r.status_code != 200:
-                self.get_logger().error(
-                    f"[{robot}] location_report failed for casualty {det['casualty_id']}: "
-                    f"{r.status_code} {r.text}"
-                )
+    def _match_or_create(self, lat, lon):
+        """
+        GPS-match against UAV detections. If no match within threshold, create a new
+        entry with the next available ID so future reports near the same spot reuse it.
+        Returns (casualty_id, dist, is_new).
+        """
+        with self.mutex:
+            min_dist = float('inf')
+            matched = None
+            for det in self.uav_detections:
+                try:
+                    d = gps_distance(lat, lon, det['lat'], det['lon'])
+                except ValueError:
+                    continue
+                if d < min_dist:
+                    min_dist = d
+                    matched = det
+
+            if matched is not None and min_dist <= self.threshold:
+                return matched['casualty_id'], min_dist, False
+
+            # No match — assign a new ID and record it
+            new_id = len(self.uav_detections)
+            self.uav_detections.append({"casualty_id": new_id, "lat": lat, "lon": lon})
+            return new_id, min_dist, True
 
     def ugv_callback(self, msg: CasualtyFix, robot: str):
         lat = msg.location.latitude
         lon = msg.location.longitude
 
-        with self.mutex:
-            detections = list(self.uav_detections)
+        casualty_id, dist, is_new = self._match_or_create(lat, lon)
 
-        if not detections:
-            self.get_logger().warn(f"[{robot}] No UAV detections yet, cannot match casualty")
-            return
-
-        min_dist = float('inf')
-        matched = None
-        for det in detections:
-            try:
-                d = gps_distance(lat, lon, det['lat'], det['lon'])
-            except ValueError:
-                continue
-            if d < min_dist:
-                min_dist = d
-                matched = det
-
-        if matched is None or min_dist > self.threshold:
+        if is_new:
             self.get_logger().warn(
                 f"[{robot}] No UAV match within {self.threshold}m "
-                f"(closest: {min_dist:.1f}m)"
+                f"(closest: {dist:.1f}m) — creating new casualty ID {casualty_id}"
             )
-            return
+        else:
+            self.get_logger().info(
+                f"[{robot}] Matched casualty {casualty_id} at {dist:.1f}m, submitting location"
+            )
 
-        self.get_logger().info(
-            f"[{robot}] Matched casualty {matched['casualty_id']} at {min_dist:.1f}m, submitting location"
-        )
-        r = location_report(lat=lat, lon=lon, level=1, id=matched['casualty_id'], system=robot)
+        r = location_report(lat=lat, lon=lon, level=1, id=casualty_id, system=robot)
         if r.status_code != 200:
             self.get_logger().error(
                 f"[{robot}] location_report failed: {r.status_code} {r.text}"

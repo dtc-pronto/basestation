@@ -10,11 +10,12 @@ system_location_submission:
     threshold_path: "/home/dtc/ws/src/scorecard_submitter/config/threshold_config.json"
     data_path: "/home/dtc/data"
     robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+    run_content_path: "/home/dtc/ws/src/scorecard_submitter/config/run_content.json"
 
 gate1_node:
   ros__parameters:
     robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
-    threshold_path: "/home/dtc/ws/src/scorecard_submitter/config/threshold_config.json"
+    gps_threshold: 5.0
 
 gate2_node:
   ros__parameters:
@@ -31,8 +32,9 @@ gate3_node:
 gate4_node:
   ros__parameters:
     robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
-    threshold_path: "/home/dtc/ws/src/scorecard_submitter/config/threshold_config.json"
+    gps_threshold: 5.0
 
 hmt_node:
   ros__parameters:
     robot_names: ["dione", "deimos", "phobos", "titania", "oberon"]
+    gps_threshold: 5.0

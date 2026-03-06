@@ -4,7 +4,8 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from sensor_msgs.msg import NavSatFix
-from submission import post_system_location
+from submission import start_run, post_system_location
+import json
 
 
 """
@@ -35,19 +36,41 @@ class SystemLocationSub(Node):
         self.latest_location = {robot: None for robot in self.robots}
         self.position_update = self.create_timer(1.0 / self.rate, self.position_update_callback)
         
-        self.subscriptions = [] 
+        self.subscription_list = [] 
+
+        self.declare_parameter('run_content_path', '')
+        run_content_path = self.get_parameter('run_content_path', '').value
+        content = {}
+        if run_content_path:
+            with open(run_content_path, 'r') as f:
+                content = json.load(f)
 
         for robot in self.robots:
             if robot in UAV:
-                self.subscriptions.append(self.create_subscription(
+                self.subscription_list.append(self.create_subscription(
                     NavSatFix, f"/{robot}/mavros/fix", lambda msg, robot=robot: self.UAV_callback(msg, robot), 1)
                     )
                 self.get_logger().info(f"Subscribed to /{robot}/mavros/fix for UAV")
             elif robot in UGV:
-                self.subscriptions.append(self.create_subscription(
+                self.subscription_list.append(self.create_subscription(
                     NavSatFix, f"/{robot}/ublox/fix", lambda msg, robot=robot: self.UGV_callback(msg, robot), 1)
                     )
                 self.get_logger().info(f"Subscribed to /{robot}/ublox/fix for UGV")
+
+        # Start the run
+
+        response = start_run(content)
+        if response.status_code == 200:
+            self.get_logger().info("Run started successfully")
+        else:
+            for i in range(4):
+                self.get_logger().error(f"Failed to start run: {response.status_code} - {response.text}. Retrying...")
+                response = start_run(content)
+                if response.status_code == 200:
+                    self.get_logger().info("Run started successfully")
+                    break
+            if response.status_code != 200:
+                self.get_logger().error(f"Failed to start run after retries: {response.status_code} - {response.text}")
 
     def UAV_callback(self, msg, robot_name):
         self.latest_location[robot_name] = msg

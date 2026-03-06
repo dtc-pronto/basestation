@@ -4,18 +4,18 @@ from rclpy.node import Node
 import threading
 import json
 
-from dtc_msgs.msg import CasualtyFixArray, HeartRate, RespirationRate
+from dtc_msgs.msg import CasualtyFixArray, Triage, Assessment
 from helpers import gps_distance
-from submission import vitals_report
+from submission import hmt_location_report, hmt_assessment_report
 
 
 UAV = ['dione']
 UGV = ['deimos', 'phobos', 'titania', 'oberon']
 
 
-class VitalsReportNode(Node):
+class HMTNode(Node):
     def __init__(self):
-        super().__init__('gate4_node')
+        super().__init__('hmt_node')
 
         self.declare_parameter('robot_names', ['dione', 'deimos', 'phobos', 'titania', 'oberon'])
         self.declare_parameter('gps_threshold', 5.0)
@@ -39,17 +39,17 @@ class VitalsReportNode(Node):
                 self.get_logger().info(f"Subscribed to /{robot}/casualty_info (UAV)")
             elif robot in UGV:
                 self.subscriptions_list.append(self.create_subscription(
-                    HeartRate,
-                    f"/{robot}/heart_rate",
-                    lambda msg, r=robot: self.hr_callback(msg, r),
+                    Triage,
+                    f"/{robot}/triage_report",
+                    lambda msg, r=robot: self.triage_callback(msg, r),
                     10))
-                self.get_logger().info(f"Subscribed to /{robot}/heart_rate")
+                self.get_logger().info(f"Subscribed to /{robot}/triage_report (HMT)")
                 self.subscriptions_list.append(self.create_subscription(
-                    RespirationRate,
-                    f"/{robot}/respiration_rate",
-                    lambda msg, r=robot: self.rr_callback(msg, r),
+                    Assessment,
+                    f"/{robot}/assessment_report",
+                    lambda msg, r=robot: self.assessment_callback(msg, r),
                     10))
-                self.get_logger().info(f"Subscribed to /{robot}/respiration_rate")
+                self.get_logger().info(f"Subscribed to /{robot}/assessment_report (HMT)")
 
     def uav_callback(self, msg: CasualtyFixArray, robot: str):
         with self.mutex:
@@ -88,59 +88,75 @@ class VitalsReportNode(Node):
             self.uav_detections.append({"casualty_id": new_id, "lat": lat, "lon": lon})
             return new_id, min_dist, True
 
-    def _submit_vitals(self, lat: float, lon: float, vital_type: str, rate: float,
-                       time_ago_stamp, robot: str):
+    def triage_callback(self, msg: Triage, robot: str):
+        lat = msg.location.location.latitude
+        lon = msg.location.location.longitude
+
         casualty_id, dist, is_new = self._match_or_create(lat, lon)
 
         if is_new:
             self.get_logger().warn(
-                f"[{robot}] No UAV match within {self.threshold}m "
+                f"[{robot}] HMT: No UAV match within {self.threshold}m "
                 f"(closest: {dist:.1f}m) — creating new casualty ID {casualty_id}"
             )
         else:
             self.get_logger().info(
-                f"[{robot}] Matched casualty {casualty_id} at {dist:.1f}m"
+                f"[{robot}] HMT location: matched casualty {casualty_id} at {dist:.1f}m"
             )
 
         now_sec = self.get_clock().now().nanoseconds / 1e9
-        measurement_sec = time_ago_stamp.sec + time_ago_stamp.nanosec / 1e9
-        time_ago = max(now_sec - measurement_sec, 0.0)
+        stamp_sec = msg.header.stamp.sec + msg.header.stamp.nanosec / 1e9
+        time_ago = max(now_sec - stamp_sec, 0.0)
 
-        self.get_logger().info(
-            f"[{robot}] Submitting {vital_type}={rate:.2f} time_ago={time_ago:.1f}s "
-            f"for casualty {casualty_id}"
+        r = hmt_location_report(
+            lat=lat,
+            lon=lon,
+            category=msg.category.value,
+            time_ago=time_ago,
+            id=casualty_id,
+            system=robot
         )
-        r = vitals_report(type=vital_type, value=rate, time_ago=time_ago,
-                          id=casualty_id, system=robot)
         if r.status_code != 200:
             self.get_logger().error(
-                f"[{robot}] vitals_report ({vital_type}) failed: {r.status_code} {r.text}"
+                f"[{robot}] hmt_location_report failed: {r.status_code} {r.text}"
             )
 
-    def hr_callback(self, msg: HeartRate, robot: str):
-        self._submit_vitals(
-            lat=msg.location.location.latitude,
-            lon=msg.location.location.longitude,
-            vital_type='hr',
-            rate=msg.rate.data,
-            time_ago_stamp=msg.location.time_ago,
-            robot=robot
-        )
+    def assessment_callback(self, msg: Assessment, robot: str):
+        lat = msg.location.location.latitude
+        lon = msg.location.location.longitude
 
-    def rr_callback(self, msg: RespirationRate, robot: str):
-        self._submit_vitals(
-            lat=msg.location.location.latitude,
-            lon=msg.location.location.longitude,
-            vital_type='rr',
-            rate=msg.rate.data,
-            time_ago_stamp=msg.location.time_ago,
-            robot=robot
+        casualty_id, dist, is_new = self._match_or_create(lat, lon)
+
+        if is_new:
+            self.get_logger().warn(
+                f"[{robot}] HMT: No UAV match within {self.threshold}m "
+                f"(closest: {dist:.1f}m) — creating new casualty ID {casualty_id}"
+            )
+        else:
+            self.get_logger().info(
+                f"[{robot}] HMT assessment: matched casualty {casualty_id} at {dist:.1f}m"
+            )
+
+        now_sec = self.get_clock().now().nanoseconds / 1e9
+        measurement_sec = msg.value.time_ago.sec + msg.value.time_ago.nanosec / 1e9
+        time_ago = max(now_sec - measurement_sec, 0.0)
+
+        r = hmt_assessment_report(
+            type=msg.type.data,
+            value=msg.value.value,
+            time_ago=time_ago,
+            id=casualty_id,
+            system=robot
         )
+        if r.status_code != 200:
+            self.get_logger().error(
+                f"[{robot}] hmt_assessment_report failed: {r.status_code} {r.text}"
+            )
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = VitalsReportNode()
+    node = HMTNode()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:

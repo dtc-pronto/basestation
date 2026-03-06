@@ -30,11 +30,16 @@ All API functions are implemented for all gates:
 
 Two mechanisms, depending on gate:
 
-### Gates 1 & 4 — UAV-driven matching table
-The UAV (dione) publishes `CasualtyFixArray` with `casualty_id` + GPS per detection. The basestation maintains a **matching table** (runtime JSON, same pattern as old `helpers.py`) built from the UAV's detections. When a UGV report arrives, it is GPS-matched against this table to resolve the scoring-server casualty ID. The UAV is the source of truth for IDs in these gates.
+### Gates 1, 4 & HMT — UAV-driven matching table
+The UAV (dione) publishes `CasualtyFixArray` with `casualty_id` + GPS per detection. Each node maintains an
+in-memory matching table built from the UAV's detections. When a UGV report arrives, it is GPS-matched
+against this table to resolve the scoring-server casualty ID. If no match is found within threshold, the
+report is still submitted with `id=None` (unmatched). The UAV is the source of truth for IDs in these gates.
 
 ### Gates 2 & 3 — Pre-loaded casualty ID JSON
-Before the run starts, a JSON file is populated at the basestation with the known casualties and their scoring-server IDs. When a robot report arrives (with GPS location), it is matched against this file using GPS distance. Proposed schema:
+Before the run starts, a JSON file is populated at the basestation with the known casualties and their
+scoring-server IDs. When a robot report arrives (with GPS location), it is matched against this file using
+GPS distance. Schema:
 
 ```json
 [
@@ -46,109 +51,109 @@ Before the run starts, a JSON file is populated at the basestation with the know
 ]
 ```
 
-File path: configurable via ROS param `casualty_id_path`, defaulting to e.g. `config/casualty_ids.json`.
+File path: configurable via ROS param `casualty_id_path` (default: `config/casualty_ids.json`).
 
 ---
 
 ## Gate Architecture
 
-### Gate 1 — Casualty Location (`casualty_location_sub.py`)
+### Gate 1 — Casualty Location (`casualty_location_sub.py`) — Complete
 
 **ROS inputs:**
-- UAV (dione): `CasualtyFixArray` (dtc_msgs) on `/dione/casualty_info`
-- UGV (jackals): `CasualtyFix` (dtc_msgs) on `/<robot>/casualty_report`
+- UAV (dione): `CasualtyFixArray` on `/dione/casualty_info`
+- UGV (jackals): `CasualtyFix` on `/<robot>/casualty_report`
 
 **`CasualtyFix` fields:** `casualty_id` (uint32), `location` (NavSatFix), `image` (Image), `time_ago` (Time)
 
-**What needs to be done:**
-- [ ] Implement callback: GPS-match incoming location against UAV matching table → call `location_report(lat, lon, level=1, id=resolved_id, system=robot)`
-- `level` is hardcoded to `1` (robots cannot determine building floor level)
+**Behaviour:** GPS-matches UGV report against UAV table → `location_report(lat, lon, level=1, id, system)`.
+If no match, submits with `id=None`. `level` hardcoded to `1`.
 
-**Status:** `__init__` with subscriptions written; **callback body empty**; matching not implemented.
+**Status: Complete.**
 
 ---
 
-### Gate 2 — Triage Report (`triage_report_sub.py`)
+### Gate 2 — Triage Report (`triage_report_sub.py`) — Complete
 
 **ROS inputs:**
-- `Triage` (dtc_msgs) on `/<robot>/triage_report` (topic name TBD)
+- `Triage` (dtc_msgs) on `/<robot>/triage_report`
 
 **`Triage` fields:** `casualty_id` (uint32), `location` (NavSatFixTimeAgo), `category` (Uint8TimeAgo)
 
-**What needs to be done:**
-- [ ] Implement `__init__` with subscriptions for each robot in `robots` param
-- [ ] Implement callback: GPS-match `msg.location` against pre-loaded `casualty_ids.json` → call `triage_report(category=msg.category.value, id=resolved_id, system=robot)`
-- Topic names: `/<robot>/triage_report` (subject to change)
+**Behaviour:** GPS-matches `msg.location` against `casualty_ids.json` → `triage_report(category, id, system)`.
+Drops report if no match within threshold.
 
-**Status:** **Stub only** — class declared, no body.
+**Status: Complete.**
 
 ---
 
-### Gate 3 — Assessment Report (`assessement_report_sub.py`)
+### Gate 3 — Assessment Report (`assessement_report_sub.py`) — Complete
 
 **ROS inputs:**
-- `Assessment` (dtc_msgs) on `/<robot>/assessment_report` (topic name TBD)
+- `Assessment` (dtc_msgs) on `/<robot>/assessment_report`
 
 **`Assessment` fields:** `casualty_id` (uint32), `location` (NavSatFixTimeAgo), `type` (String), `value` (Uint8TimeAgo)
 - `type.data` = assessment field name (e.g. `"trauma_head"`, `"alertness_ocular"`)
 - `value.value` = numeric assessment value; `value.time_ago` = measurement timestamp
 
-**What needs to be done:**
-- [ ] Implement `__init__` with subscriptions for each robot
-- [ ] Implement callback: GPS-match `msg.location` against pre-loaded `casualty_ids.json` → call `trauma_report(type=msg.type.value, value=msg.type.value, time_ago=msg.type.time_ago, id=resolved_id, system=robot)`
-- Topic names: `/<robot>/assessment_report` (subject to change)
+**Behaviour:** GPS-matches `msg.location` against `casualty_ids.json` → `trauma_report(type, value, time_ago, id, system)`.
+Drops report if no match within threshold.
 
-**Status:** **Stub only** — class declared, no body.
+**Status: Complete.**
 
 ---
 
-### Gate 4 — Vitals Report (`vital_report_sub.py`)
+### Gate 4 — Vitals Report (`vital_report_sub.py`) — Complete
 
 **ROS inputs:**
-- `HeartRate` (dtc_msgs) on `/<robot>/heart_rate` (topic name TBD)
-- `RespirationRate` (dtc_msgs) on `/<robot>/respiration_rate` (topic name TBD)
+- UAV (dione): `CasualtyFixArray` on `/dione/casualty_info`
+- UGV (jackals): `HeartRate` on `/<robot>/heart_rate`, `RespirationRate` on `/<robot>/respiration_rate`
 
-**`HeartRate` / `RespirationRate` fields:** `casualty_id` (UInt64), `rate` (Float64), header timestamp
-**GPS will be added to these messages** — pending dtc-msgs update (same `NavSatFixTimeAgo` pattern as `Triage`/`Assessment`).
+**`HeartRate` / `RespirationRate` fields:** `casualty_id` (uint32), `location` (NavSatFixTimeAgo), `rate` (Float64), `header`
 
-**What needs to be done:**
-- [ ] Implement `__init__` with subscriptions for HR and RR for each robot
-- [ ] Once GPS is added to messages: GPS-match against UAV matching table → call `vitals_report(type='hr'/'rr', value=msg.rate.data, time_ago=..., id=resolved_id, system=robot)`
-- [ ] `time_ago` = difference between `msg.header.stamp` and current ROS time
-- Topic names: `/<robot>/heart_rate` and `/<robot>/respiration_rate` (subject to change)
+**Behaviour:** GPS-matches `msg.location` against UAV detection table →
+`vitals_report(type='hr'/'rr', value=msg.rate.data, time_ago, id, system)`.
+`time_ago` = now − `msg.location.time_ago`. Drops report if no match within threshold.
 
-**Status:** **Stub only** — class declared, no body.
+**Status: Complete.**
 
 ---
 
-### HMT Node (`hmt_node.py`)
+### HMT Node (`hmt_node.py`) — Complete
 
-**Status:** **Deferred.** HMT is a human-machine teaming variant of all gates (same structure, different API endpoints: `/api/hmt/casualty` and `/api/hmt/assessment`). Will be implemented after Gates 1–4 are complete. API functions already exist in `submission.py`.
+**ROS inputs:**
+- UAV (dione): `CasualtyFixArray` on `/dione/casualty_info`
+- UGV (jackals): `Triage` on `/<robot>/triage_report`, `Assessment` on `/<robot>/assessment_report`
+
+**Behaviour:**
+- `Triage` → GPS-match against UAV table → `hmt_location_report(lat, lon, category, time_ago, id, system)`
+- `Assessment` → GPS-match against UAV table → `hmt_assessment_report(type, value, time_ago, id, system)`
+- If no UAV match within threshold: **still submits** with `id=None` and logs a warning (unmatched report).
+  `time_ago` for triage = now − header.stamp; for assessment = now − `msg.value.time_ago`.
+
+**Status: Complete.**
 
 ---
 
-### Always-On — System Location (`system_location_sub.py`)
+### Always-On — System Location (`system_location_sub.py`) — Complete
 
-**Status: Complete.** Subscribes to NavSatFix for each robot, posts to `/api/system_location` at configurable rate with retry logic.
+Subscribes to NavSatFix for each robot, posts to `/api/system_location` at configurable rate with retry logic.
 
 ---
 
-## CMakeLists.txt — Needs Update
+## CMakeLists.txt — Complete
 
-Currently only `submission_node.py` and `spoofer.py` are registered. All new nodes must be added to `install(PROGRAMS ...)`:
+All nodes registered in `install(PROGRAMS ...)`:
 
-- [ ] `casualty_location_sub.py`
-- [ ] `triage_report_sub.py`
-- [ ] `assessement_report_sub.py`
-- [ ] `vital_report_sub.py`
-- [ ] `system_location_sub.py`
-- [ ] `hmt_node.py` (once created)
+- [x] `casualty_location_sub.py`
+- [x] `triage_report_sub.py`
+- [x] `assessement_report_sub.py`
+- [x] `vital_report_sub.py`
+- [x] `system_location_sub.py`
+- [x] `hmt_node.py`
 
 ---
 
 ## Open Questions
 
-1. **Gate 4 GPS** — `HeartRate`/`RespirationRate` msgs need GPS added in dtc-msgs before Gate 4 matching can be implemented.
-2. **Casualty ID JSON path** — `casualty_ids.json` schema is defined; exact config param name and default path to be confirmed.
-3. **Topic naming** — All Gates 2–4 topic names (`/<robot>/triage_report`, etc.) are provisional and likely to change.
-4. **Spoofer** — Will need to be updated to publish `Triage`, `Assessment`, `HeartRate`, `RespirationRate`, and `CasualtyFix` messages for testing.
+1. **Topic naming** — All Gates 2–4 topic names (`/<robot>/triage_report`, etc.) are provisional and likely to change.
+2. **Spoofer** — Will need to be updated to publish `Triage`, `Assessment`, `HeartRate`, `RespirationRate`, and `CasualtyFix` messages for testing.
