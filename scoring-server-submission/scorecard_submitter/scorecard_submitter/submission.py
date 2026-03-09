@@ -126,7 +126,7 @@ def location_report(lat, lon, level, id, system):
     TOKEN = os.getenv("TOKEN")
     BASE_URL = os.getenv("BASE_URL")
 
-    url = f"{BASE_URL}/api/location_report"
+    url = f"{BASE_URL}/api/location"
     headers = {
         "accept": "application/json",
         "Authorization": TOKEN,

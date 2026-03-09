@@ -24,16 +24,15 @@ ament_python_install_package(${PROJECT_NAME})
 
 # Install Python executables
 install(PROGRAMS
-  scorecard_submitter/submission_node.py
-  scorecard_submitter/spoofer.py
-  scorecard_submitter/casualty_location_sub.py
-  scorecard_submitter/triage_report_sub.py
-  scorecard_submitter/assessement_report_sub.py
-  scorecard_submitter/vital_report_sub.py
+  scorecard_submitter/gate1_casualty_location_sub.py
+  scorecard_submitter/gate2_triage_report_sub.py
+  scorecard_submitter/gate3_assessement_report_sub.py
+  scorecard_submitter/gate4_vital_report_sub.py
   scorecard_submitter/system_location_sub.py
   scorecard_submitter/hmt_node.py
   scorecard_submitter/atak_report_node.py
   scorecard_submitter/casualty_image_node.py
+  scorecard_submitter/test_cases_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
