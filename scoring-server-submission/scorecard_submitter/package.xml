@@ -25,6 +25,8 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend> 
   <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>dtc_msgs</exec_depend>
+  
 
   <!-- Python runtime dependencies-->
   <exec_depend>python-utm</exec_depend>

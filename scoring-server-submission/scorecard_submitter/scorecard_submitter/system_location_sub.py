@@ -4,6 +4,7 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from sensor_msgs.msg import NavSatFix
+from dtc_msgs.msg import Gate1
 from submission import start_run, post_system_location
 import json
 
@@ -53,7 +54,7 @@ class SystemLocationSub(Node):
                 self.get_logger().info(f"Subscribed to /{robot}/mavros/fix for UAV")
             elif robot in UGV:
                 self.subscription_list.append(self.create_subscription(
-                    NavSatFix, f"/{robot}/ublox/fix", lambda msg, robot=robot: self.UGV_callback(msg, robot), 1)
+                    Gate1, f"/{robot}/system_location", lambda msg, robot=robot: self.UGV_callback(msg, robot), 1)
                     )
                 self.get_logger().info(f"Subscribed to /{robot}/ublox/fix for UGV")
 

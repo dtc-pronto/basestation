@@ -4,7 +4,7 @@ from rclpy.node import Node
 import threading
 import json
 
-from dtc_msgs.msg import CasualtyFixArray, CasualtyFix
+from dtc_msgs.msg import CasualtyFixArray, CasualtyFix, Gate1
 from helpers import gps_distance
 from submission import location_report
 
@@ -83,9 +83,9 @@ class CasualtyLocationSub(Node):
             self.uav_detections.append({"casualty_id": new_id, "lat": lat, "lon": lon})
             return new_id, min_dist, True
 
-    def ugv_callback(self, msg: CasualtyFix, robot: str):
-        lat = msg.location.latitude
-        lon = msg.location.longitude
+    def ugv_callback(self, msg: Gate1, robot: str):
+        lat = msg.latitude
+        lon = msg.longitude
 
         casualty_id, dist, is_new = self._match_or_create(lat, lon)
 
@@ -99,6 +99,7 @@ class CasualtyLocationSub(Node):
                 f"[{robot}] Matched casualty {casualty_id} at {dist:.1f}m, submitting location"
             )
 
+        #TODO: Level hardcoded at 1 
         r = location_report(lat=lat, lon=lon, level=1, id=casualty_id, system=robot)
         if r.status_code != 200:
             self.get_logger().error(

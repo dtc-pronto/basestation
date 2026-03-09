@@ -23,7 +23,7 @@ def generate_launch_description():
 
     gate_1_node = Node(
             package='scorecard_submitter',
-            executable='casualty_location_sub.py',
+            executable='gate1_casualty_location_sub.py',
             name='gate1_node',
             condition=IfCondition(LaunchConfiguration('gate_1')),
             parameters=[params_file]
@@ -31,7 +31,7 @@ def generate_launch_description():
 
     gate_2_node = Node(
             package='scorecard_submitter',
-            executable='triage_report_sub.py',
+            executable='gate2_triage_report_sub.py',
             name='gate2_node',
             condition=IfCondition(LaunchConfiguration('gate_2')),
             parameters=[params_file]
@@ -39,7 +39,7 @@ def generate_launch_description():
 
     gate_3_node = Node(
             package='scorecard_submitter',
-            executable='assessement_report_sub.py',
+            executable='gate3_assessement_report_sub.py',
             name='gate3_node',
             condition=IfCondition(LaunchConfiguration('gate_3')),
             parameters=[params_file]
@@ -47,7 +47,7 @@ def generate_launch_description():
 
     gate_4_node = Node(
             package='scorecard_submitter',
-            executable='vital_report_sub.py',
+            executable='gate4_vital_report_sub.py',
             name='gate4_node',
             condition=IfCondition(LaunchConfiguration('gate_4')),
             parameters=[params_file]

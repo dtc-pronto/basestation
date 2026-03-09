@@ -30,8 +30,6 @@ matching_entry = {
 
 }
 
-
-
 def gps_distance(lat1, lon1, lat2, lon2):
     """
     Compute Euclidean distance (in meters) between two GPS coordinates
