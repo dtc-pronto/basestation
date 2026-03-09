@@ -1,1 +1,0 @@
-ros2 run scorecard_submitter gate1_dummy_test_node --ros-args -p debug_data_path:=/tmp/casualty_debug
