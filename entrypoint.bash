@@ -28,14 +28,18 @@ elif [ "$GATE_ENV" == "5" ]; then
 fi
 
 if [ "$SENDER" == "true" ]; then
+    echo "Launching Scorecard Sender"
     ros2 launch scorecard_submitter gate_conditional.launch.py gate_1:=${GATE1} gate_2:=${GATE2} gate_3:=${GATE3} gate_4:=${GATE4} hmt:=${GATE5} &
 fi
 
 if [ "$MOCHA" == "true" ]; then
+    echo "Launching MOCHA"
     ros2 launch mocha_launch basestation.launch.py robot_name:=basestation &
 fi
 
 if [ "$RTK" == "true" ]; then
-    echo "RTK not implemented yet"
+    echo "Launching RTK Broadcaster"
+    # this will launch with default ip address of 10.10.10.10 and port 7507
+    ros2 launch rtk_correction broadcaster.launch.py &
 fi
 wait

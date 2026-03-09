@@ -15,13 +15,14 @@ RUN sudo apt-get update && sudo apt-get install -y \
 
 RUN cd ws/src && git clone https://github.com/KumarRobotics/MOCHA -b dtc/ros2/main
 RUN cd ws/src && git clone https://github.com/dtc-pronto/dtc-msgs
-
+RUN cd ws/src && git clone https://github.com/dtc-pronto/rtk-correction
 WORKDIR /home/dtc
 
 ENV MOCHA=false \
     RTK=false \
     SENDER=false \
-    VIZ=false
+    GATE=1
+
 RUN sudo apt update && sudo apt install -y \
  python3-zmq \
  default-jre \
@@ -29,7 +30,6 @@ RUN sudo apt update && sudo apt install -y \
  python3-lz4 \
  python3-defusedxml
 
-COPY ./basestation-launch ./basestation-launch
 COPY ./scoring-server-submission ws/src/scoring-server-submission
 
 RUN /bin/bash -c "\
