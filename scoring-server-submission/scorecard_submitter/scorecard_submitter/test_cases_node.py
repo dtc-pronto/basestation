@@ -14,6 +14,10 @@ from dtc_msgs.msg import CasualtyFixArray, CasualtyFix, Gate1, Gate2, Gate3, Gat
 GT_1 = {"casualty_id": 1, "lon": -75.20125345, "lat": 39.94148424}
 GT_2 = {"casualty_id": 2, "lon": -75.20025345, "lat": 39.94148424}
 
+HMT_1 = {"lat": 39.94148424, "lon": -75.20125345}
+HMT_2 = {"lat": 39.94148424, "lon": -75.20025345}
+HMT_3 = {"lat": 39.94148424, "lon": -75.19925345}
+HMT_4 = {"lat": 39.94148424, "lon": -75.19825345}
 
 class ScorecardIntegrationTest(Node):
     def __init__(self):
@@ -22,7 +26,7 @@ class ScorecardIntegrationTest(Node):
         self.declare_parameter('debug_data_path', '/tmp/casualty_debug')
         self.declare_parameter('uav_robot', 'dione')
         self.declare_parameter('ugv_robot', 'deimos')
-        self.declare_parameter('test_gate', 4)
+        self.declare_parameter('test_gate', 5)
 
         self.debug_data_path = self.get_parameter('debug_data_path').value
         self.uav_robot = self.get_parameter('uav_robot').value
@@ -102,6 +106,15 @@ class ScorecardIntegrationTest(Node):
                 self.g4_step_3_publish_gate4_again_for_gt2_should_be_ignored,
                 self.g4_step_4_finish,
             ]
+        if gate == 5:
+            return [
+                self.hmt_step_1_create_and_submit_person_1,
+                self.hmt_step_2_create_and_submit_person_2,
+                self.hmt_step_3_create_and_submit_person_3,
+                self.hmt_step_4_create_and_submit_person_4,
+                self.hmt_step_5_repeat_person_1_should_be_ignored,
+                self.finish,
+            ]
         raise ValueError(f'Unsupported test_gate={gate}')
 
     def run_next_step(self):
@@ -129,6 +142,48 @@ class ScorecardIntegrationTest(Node):
     def assert_true(self, condition: bool, message: str):
         if not condition:
             self.fail(message)
+
+    def publish_full_hmt_person(
+        self,
+        lat: float,
+        lon: float,
+        category_value: int,
+        trauma_head: int,
+        trauma_torso_back: int,
+        trauma_torso_front: int,
+        trauma_leg_right: int,
+        trauma_leg_left: int,
+        trauma_arm_right: int,
+        trauma_arm_left: int,
+        alertness_ocular: int,
+        alertness_verbal: int,
+        alertness_motor: int,
+        second_pass_category: int,
+    ):
+        # Create/update detected person in HMT DB
+        self.publish_gate1(lat=lat, lon=lon)
+
+        # Triage for /hmt/casualty
+        self.publish_gate2(category_value=category_value)
+
+        # Assessment for /hmt/assessment
+        msg = Gate3()
+        msg.trauma_head = trauma_head
+        msg.trauma_torso_back = trauma_torso_back
+        msg.trauma_torso_front = trauma_torso_front
+        msg.trauma_leg_right = trauma_leg_right
+        msg.trauma_leg_left = trauma_leg_left
+        msg.trauma_arm_right = trauma_arm_right
+        msg.trauma_arm_left = trauma_arm_left
+        msg.alertness_ocular = alertness_ocular
+        msg.alertness_verbal = alertness_verbal
+        msg.alertness_motor = alertness_motor
+        msg.second_pass_category = second_pass_category
+        self.gate3_pub.publish(msg)
+
+        self.get_logger().info(
+            f"Published full HMT person sequence at lat={lat:.8f}, lon={lon:.8f}"
+        )
 
     def latest_gate1_debug_dir(self) -> Optional[str]:
         pattern = os.path.join(self.debug_data_path, 'gate1_debug_*')
@@ -338,6 +393,112 @@ class ScorecardIntegrationTest(Node):
             'Gate4 manual verification point: first submission should go through, second should be ignored'
         )
         self.finish()
+
+    # ----------------------------
+    # HMT tests (test_gate = 5)
+    # ----------------------------
+
+    # ----------------------------
+    # HMT tests (test_gate = 5)
+    # HMT uses previously detected people, not ground truth
+    # ----------------------------
+
+    def hmt_step_1_create_and_submit_person_1(self):
+        self.get_logger().info('HMT TEST: create and submit person 1')
+        self.publish_full_hmt_person(
+            lat=39.94148424,
+            lon=-75.20125345,
+            category_value=1,
+            trauma_head=1,
+            trauma_torso_back=0,
+            trauma_torso_front=1,
+            trauma_leg_right=0,
+            trauma_leg_left=1,
+            trauma_arm_right=0,
+            trauma_arm_left=1,
+            alertness_ocular=1,
+            alertness_verbal=2,
+            alertness_motor=0,
+            second_pass_category=2,
+        )
+
+    def hmt_step_2_create_and_submit_person_2(self):
+        self.get_logger().info('HMT TEST: create and submit person 2')
+        self.publish_full_hmt_person(
+            lat=39.94148424,
+            lon=-75.20025345,
+            category_value=2,
+            trauma_head=0,
+            trauma_torso_back=1,
+            trauma_torso_front=0,
+            trauma_leg_right=1,
+            trauma_leg_left=0,
+            trauma_arm_right=1,
+            trauma_arm_left=0,
+            alertness_ocular=0,
+            alertness_verbal=1,
+            alertness_motor=2,
+            second_pass_category=0,
+        )
+
+    def hmt_step_3_create_and_submit_person_3(self):
+        self.get_logger().info('HMT TEST: create and submit person 3')
+        self.publish_full_hmt_person(
+            lat=39.94148424,
+            lon=-75.19925345,
+            category_value=3,
+            trauma_head=1,
+            trauma_torso_back=1,
+            trauma_torso_front=0,
+            trauma_leg_right=0,
+            trauma_leg_left=1,
+            trauma_arm_right=1,
+            trauma_arm_left=0,
+            alertness_ocular=1,
+            alertness_verbal=1,
+            alertness_motor=1,
+            second_pass_category=1,
+        )
+
+    def hmt_step_4_create_and_submit_person_4(self):
+        self.get_logger().info('HMT TEST: create and submit person 4')
+        self.publish_full_hmt_person(
+            lat=39.94148424,
+            lon=-75.19825345,
+            category_value=4,
+            trauma_head=0,
+            trauma_torso_back=0,
+            trauma_torso_front=1,
+            trauma_leg_right=1,
+            trauma_leg_left=1,
+            trauma_arm_right=0,
+            trauma_arm_left=0,
+            alertness_ocular=2,
+            alertness_verbal=0,
+            alertness_motor=1,
+            second_pass_category=3,
+        )
+
+    def hmt_step_5_repeat_person_1_should_be_ignored(self):
+        self.get_logger().info(
+            'HMT TEST: repeat person 1; HMT node should ignore duplicate casualty and assessment submission'
+        )
+        self.publish_full_hmt_person(
+            lat=39.94148424,
+            lon=-75.20125345,
+            category_value=1,
+            trauma_head=1,
+            trauma_torso_back=0,
+            trauma_torso_front=1,
+            trauma_leg_right=0,
+            trauma_leg_left=1,
+            trauma_arm_right=0,
+            trauma_arm_left=1,
+            alertness_ocular=1,
+            alertness_verbal=2,
+            alertness_motor=0,
+            second_pass_category=2,
+        )
 
 
 def main(args=None):
