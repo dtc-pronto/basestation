@@ -178,7 +178,7 @@ def trauma_report(type, value, time_ago, id, system):
     TOKEN = os.getenv("TOKEN")
     BASE_URL = os.getenv("BASE_URL")
 
-    url = f"{BASE_URL}/api/trauma"
+    url = f"{BASE_URL}/api/assessment"
     headers = {
         "accept": "application/json",
         "Authorization": TOKEN,

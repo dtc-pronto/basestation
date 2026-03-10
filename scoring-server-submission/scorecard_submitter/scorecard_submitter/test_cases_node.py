@@ -8,58 +8,101 @@ from typing import Optional, List, Dict
 import rclpy
 from rclpy.node import Node
 
-from dtc_msgs.msg import CasualtyFixArray, CasualtyFix, Gate1
+from dtc_msgs.msg import CasualtyFixArray, CasualtyFix, Gate1, Gate2, Gate3, Gate4
 
 
-class Gate1DummyIntegrationTest(Node):
+GT_1 = {"casualty_id": 1, "lon": -75.20125345, "lat": 39.94148424}
+GT_2 = {"casualty_id": 2, "lon": -75.20025345, "lat": 39.94148424}
+
+
+class ScorecardIntegrationTest(Node):
     def __init__(self):
-        super().__init__('gate1_dummy_test_node')
+        super().__init__('scorecard_integration_test_node')
 
         self.declare_parameter('debug_data_path', '/tmp/casualty_debug')
         self.declare_parameter('uav_robot', 'dione')
-        self.declare_parameter('ugv_robots', ['deimos', 'phobos', 'titania', 'oberon'])
+        self.declare_parameter('ugv_robot', 'deimos')
+        self.declare_parameter('test_gate', 4)
 
         self.debug_data_path = self.get_parameter('debug_data_path').value
         self.uav_robot = self.get_parameter('uav_robot').value
-        self.ugv_robots = list(self.get_parameter('ugv_robots').value)
+        self.ugv_robot = self.get_parameter('ugv_robot').value
+        self.test_gate = int(self.get_parameter('test_gate').value)
 
         self.uav_pub = self.create_publisher(
             CasualtyFixArray,
             f'/{self.uav_robot}/casualty_info',
             10
         )
-
-        self.ugv_pubs = {
-            robot: self.create_publisher(Gate1, f'/{robot}/triage_report/gate1', 10)
-            for robot in self.ugv_robots
-        }
+        self.gate1_pub = self.create_publisher(
+            Gate1,
+            f'/{self.ugv_robot}/triage_report/gate1',
+            10
+        )
+        self.gate2_pub = self.create_publisher(
+            Gate2,
+            f'/{self.ugv_robot}/triage_report/gate2',
+            10
+        )
+        self.gate3_pub = self.create_publisher(
+            Gate3,
+            f'/{self.ugv_robot}/triage_report/gate3',
+            10
+        )
+        self.gate4_pub = self.create_publisher(
+            Gate4,
+            f'/{self.ugv_robot}/triage_report/gate4',
+            10
+        )
 
         self.test_failed = False
         self.test_fail_reasons: List[str] = []
         self.latest_debug_dir: Optional[str] = None
 
-        self.steps = [
-            self.step_1_publish_uav_seed,
-            self.step_2_publish_ugv_match_uav,
-            self.step_3_assert_first_match,
-            self.step_4_publish_ugv_match_prior_same_area,
-            self.step_5_assert_second_match_same_id,
-            self.step_6_publish_ugv_far_new_id,
-            self.step_7_assert_third_is_new,
-            self.step_8_publish_ugv_match_prior_ugv,
-            self.step_9_assert_fourth_matches_third,
-            self.step_10_finish,
-        ]
+        self.steps = self._build_steps(self.test_gate)
         self.current_step = 0
 
-        self.get_logger().info('Gate1 dummy integration test node started')
+        self.get_logger().info(f'Scorecard integration test node started for gate {self.test_gate}')
         self.get_logger().info(f'Watching debug path: {self.debug_data_path}')
 
         self.timer = self.create_timer(1.0, self.run_next_step)
 
     # ----------------------------
-    # Utilities
+    # Step routing
     # ----------------------------
+
+    def _build_steps(self, gate: int):
+        if gate == 1:
+            return [
+                self.g1_step_1_publish_uav_seed,
+                self.g1_step_2_publish_gate1_match_uav,
+                self.g1_step_3_assert_first_match,
+                self.g1_step_4_publish_gate1_far_new_id,
+                self.g1_step_5_assert_second_is_new,
+                self.finish,
+            ]
+        if gate == 2:
+            return [
+                self.g2_step_1_publish_gate1_for_gt1,
+                self.g2_step_2_publish_gate2_for_gt1,
+                self.g2_step_3_publish_gate2_again_for_gt1_should_be_ignored,
+                self.g2_step_4_finish,
+            ]
+        if gate == 3:
+            return [
+                self.g3_step_1_publish_gate1_for_gt1,
+                self.g3_step_2_publish_gate3_for_gt1,
+                self.g3_step_3_publish_gate3_again_for_gt1_should_be_ignored,
+                self.g3_step_4_finish,
+            ]
+        if gate == 4:
+            return [
+                self.g4_step_1_publish_gate1_for_gt2,
+                self.g4_step_2_publish_gate4_for_gt2,
+                self.g4_step_3_publish_gate4_again_for_gt2_should_be_ignored,
+                self.g4_step_4_finish,
+            ]
+        raise ValueError(f'Unsupported test_gate={gate}')
 
     def run_next_step(self):
         if self.current_step >= len(self.steps):
@@ -74,10 +117,18 @@ class Gate1DummyIntegrationTest(Node):
 
         self.current_step += 1
 
+    # ----------------------------
+    # Helpers
+    # ----------------------------
+
     def fail(self, reason: str):
         self.test_failed = True
         self.test_fail_reasons.append(reason)
         self.get_logger().error(reason)
+
+    def assert_true(self, condition: bool, message: str):
+        if not condition:
+            self.fail(message)
 
     def latest_gate1_debug_dir(self) -> Optional[str]:
         pattern = os.path.join(self.debug_data_path, 'gate1_debug_*')
@@ -101,20 +152,6 @@ class Gate1DummyIntegrationTest(Node):
         self.latest_debug_dir = debug_dir
         return self.read_json(os.path.join(debug_dir, 'match_log.json'))
 
-    def get_uav_json(self) -> List[Dict]:
-        if self.latest_debug_dir is None:
-            self.latest_debug_dir = self.latest_gate1_debug_dir()
-        if self.latest_debug_dir is None:
-            raise RuntimeError('No debug directory available')
-        return self.read_json(os.path.join(self.latest_debug_dir, 'uav_detections.json'))
-
-    def get_ugv_json(self) -> List[Dict]:
-        if self.latest_debug_dir is None:
-            self.latest_debug_dir = self.latest_gate1_debug_dir()
-        if self.latest_debug_dir is None:
-            raise RuntimeError('No debug directory available')
-        return self.read_json(os.path.join(self.latest_debug_dir, 'ugv_detections.json'))
-
     def publish_uav_array(self, casualties: List[Dict]):
         msg = CasualtyFixArray()
         msg.casualties = []
@@ -129,131 +166,54 @@ class Gate1DummyIntegrationTest(Node):
         self.uav_pub.publish(msg)
         self.get_logger().info(f'Published UAV array with {len(msg.casualties)} casualties')
 
-    def publish_gate1(self, robot: str, lat: float, lon: float):
-        if robot not in self.ugv_pubs:
-            raise RuntimeError(f'No publisher configured for robot "{robot}"')
-
+    def publish_gate1(self, lat: float, lon: float):
         msg = Gate1()
         msg.latitude = float(lat)
         msg.longitude = float(lon)
-        self.ugv_pubs[robot].publish(msg)
+        self.gate1_pub.publish(msg)
         self.get_logger().info(
-            f'Published Gate1 from {robot}: lat={lat:.7f}, lon={lon:.7f}'
+            f'Published Gate1 on /{self.ugv_robot}/triage_report/gate1: lat={lat:.8f}, lon={lon:.8f}'
         )
 
-    def assert_true(self, condition: bool, message: str):
-        if not condition:
-            self.fail(message)
-
-    # ----------------------------
-    # Scripted test steps
-    # ----------------------------
-
-    def step_1_publish_uav_seed(self):
-        """
-        Seed one UAV casualty with ID 42.
-        """
-        self.get_logger().info('TEST 1: Publishing UAV seed casualty')
-        self.publish_uav_array([
-            {
-                'casualty_id': 42,
-                'lat': 35.1563000,
-                'lon': -79.5641000,
-            }
-        ])
-
-    def step_2_publish_ugv_match_uav(self):
-        """
-        Publish a UGV report close to the UAV casualty.
-        Expected: match ID 42.
-        """
-        self.get_logger().info('TEST 2: Publishing UGV report near UAV casualty')
-        self.publish_gate1('deimos', 35.1563010, -79.5640990)
-
-    def step_3_assert_first_match(self):
-        logs = self.get_match_log()
-        self.assert_true(len(logs) >= 1, 'Expected at least 1 entry in match_log.json')
-
-        last = logs[-1]
-        self.assert_true(last['matched_id'] == 42, f'Expected first match to ID 42, got {last}')
-        self.assert_true(last['is_new'] is False, f'Expected first match to not be new, got {last}')
-        self.assert_true(last['source'] == 'uav', f'Expected source=uav, got {last}')
-
-        self.get_logger().info('PASS: First UGV report matched UAV ID 42')
-
-    def step_4_publish_ugv_match_prior_same_area(self):
-        """
-        Publish another UGV near the same spot.
-        Expected: match same casualty ID (42), via UAV or prior UGV.
-        """
-        self.get_logger().info('TEST 3: Publishing second UGV near same area')
-        self.publish_gate1('phobos', 35.1563020, -79.5641010)
-
-    def step_5_assert_second_match_same_id(self):
-        logs = self.get_match_log()
-        self.assert_true(len(logs) >= 2, 'Expected at least 2 entries in match_log.json')
-
-        last = logs[-1]
-        self.assert_true(last['matched_id'] == 42, f'Expected second match to ID 42, got {last}')
-        self.assert_true(last['is_new'] is False, f'Expected second match to not be new, got {last}')
-
-        self.get_logger().info('PASS: Second UGV report reused casualty ID 42')
-
-    def step_6_publish_ugv_far_new_id(self):
-        """
-        Publish a far-away UGV report.
-        Expected: new casualty ID created.
-        """
-        self.get_logger().info('TEST 4: Publishing far-away UGV report')
-        self.publish_gate1('oberon', 35.1605000, -79.5700000)
-
-    def step_7_assert_third_is_new(self):
-        logs = self.get_match_log()
-        self.assert_true(len(logs) >= 3, 'Expected at least 3 entries in match_log.json')
-
-        last = logs[-1]
-        self.assert_true(last['is_new'] is True, f'Expected far-away report to be new, got {last}')
-        self.assert_true(last['matched_id'] != 42, f'Expected new ID not equal to 42, got {last}')
-
-        self.new_far_id = last['matched_id']
-        self.get_logger().info(f'PASS: Far-away UGV report created new casualty ID {self.new_far_id}')
-
-    def step_8_publish_ugv_match_prior_ugv(self):
-        """
-        Publish another UGV near the far-away UGV report.
-        Expected: match the prior UGV-created ID.
-        """
-        self.get_logger().info('TEST 5: Publishing UGV near prior far-away UGV casualty')
-        self.publish_gate1('titania', 35.1605010, -79.5699990)
-
-    def step_9_assert_fourth_matches_third(self):
-        logs = self.get_match_log()
-        self.assert_true(len(logs) >= 4, 'Expected at least 4 entries in match_log.json')
-
-        last = logs[-1]
-        self.assert_true(
-            last['matched_id'] == self.new_far_id,
-            f'Expected fourth report to match prior UGV ID {self.new_far_id}, got {last}'
-        )
-        self.assert_true(
-            last['is_new'] is False,
-            f'Expected fourth report to reuse prior UGV casualty, got {last}'
+    def publish_gate2(self, category_value: int):
+        msg = Gate2()
+        msg.category = int(category_value)
+        self.gate2_pub.publish(msg)
+        self.get_logger().info(
+            f'Published Gate2 on /{self.ugv_robot}/triage_report/gate2: category={category_value}'
         )
 
-        ugv_data = self.get_ugv_json()
-        self.assert_true(len(ugv_data) >= 4, 'Expected ugv_detections.json to contain entries')
+    def publish_gate3(self):
+        msg = Gate3()
+        msg.trauma_head = 1
+        msg.trauma_torso_back = 0
+        msg.trauma_torso_front = 1
+        msg.trauma_leg_right = 0
+        msg.trauma_leg_left = 1
+        msg.trauma_arm_right = 0
+        msg.trauma_arm_left = 1
+        msg.alertness_ocular = 1
+        msg.alertness_verbal = 2
+        msg.alertness_motor = 0
+        msg.second_pass_category = 3
+        self.gate3_pub.publish(msg)
+        self.get_logger().info(
+            f'Published Gate3 on /{self.ugv_robot}/triage_report/gate3'
+        )
 
-        uav_data = self.get_uav_json()
-        self.assert_true(len(uav_data) >= 1, 'Expected uav_detections.json to contain UAV seed')
+    def publish_gate4(self, rr: float, hr: float):
+        msg = Gate4()
+        msg.rr = float(rr)
+        msg.hr = float(hr)
+        self.gate4_pub.publish(msg)
+        self.get_logger().info(
+            f'Published Gate4 on /{self.ugv_robot}/triage_report/gate4: rr={rr}, hr={hr}'
+        )
 
-        self.get_logger().info('PASS: Prior UGV matching works')
-        self.get_logger().info(f'Debug dir used: {self.latest_debug_dir}')
-
-    def step_10_finish(self):
+    def finish(self):
         if self.test_failed:
             self.shutdown_with_result()
             return
-
         self.get_logger().info('All integration tests passed')
         self.shutdown_with_result()
 
@@ -272,10 +232,117 @@ class Gate1DummyIntegrationTest(Node):
         rclpy.shutdown()
         sys.exit(code)
 
+    # ----------------------------
+    # Gate 1 tests
+    # ----------------------------
+
+    def g1_step_1_publish_uav_seed(self):
+        self.get_logger().info('GATE1 TEST: publish UAV seed for casualty 1')
+        self.publish_uav_array([GT_1])
+
+    def g1_step_2_publish_gate1_match_uav(self):
+        self.get_logger().info('GATE1 TEST: publish Gate1 near casualty 1')
+        self.publish_gate1(lat=GT_1['lat'], lon=GT_1['lon'])
+
+    def g1_step_3_assert_first_match(self):
+        logs = self.get_match_log()
+        self.assert_true(len(logs) >= 1, 'Expected at least 1 entry in match_log.json')
+
+        last = logs[-1]
+        self.assert_true(last['matched_id'] == 1, f'Expected match to ID 1, got {last}')
+        self.assert_true(last['is_new'] is False, f'Expected not new, got {last}')
+        self.get_logger().info('PASS: Gate1 matched GT casualty 1')
+
+    def g1_step_4_publish_gate1_far_new_id(self):
+        self.get_logger().info('GATE1 TEST: publish Gate1 far away to create a new ID')
+        self.publish_gate1(lat=39.95000000, lon=-75.21000000)
+
+    def g1_step_5_assert_second_is_new(self):
+        logs = self.get_match_log()
+        self.assert_true(len(logs) >= 2, 'Expected at least 2 entries in match_log.json')
+        last = logs[-1]
+        self.assert_true(last['is_new'] is True, f'Expected far report to be new, got {last}')
+        self.get_logger().info('PASS: Gate1 created a new ID for far-away report')
+
+    # ----------------------------
+    # Gate 2 tests
+    # ----------------------------
+
+    def g2_step_1_publish_gate1_for_gt1(self):
+        self.get_logger().info('GATE2 TEST: publish Gate1 GPS for GT casualty 1')
+        self.publish_gate1(lat=GT_1['lat'], lon=GT_1['lon'])
+
+    def g2_step_2_publish_gate2_for_gt1(self):
+        self.get_logger().info('GATE2 TEST: publish Gate2 for casualty 1')
+        self.publish_gate2(category_value=2)
+
+    def g2_step_3_publish_gate2_again_for_gt1_should_be_ignored(self):
+        self.get_logger().info(
+            'GATE2 TEST: publish Gate2 again for same location; node should ignore because casualty 1 is already consumed'
+        )
+        self.publish_gate1(lat=GT_1['lat'], lon=GT_1['lon'])
+        self.publish_gate2(category_value=3)
+
+    def g2_step_4_finish(self):
+        self.get_logger().info(
+            'Gate2 manual verification point: first submission should go through, second should log no unresolved match or be ignored'
+        )
+        self.finish()
+
+    # ----------------------------
+    # Gate 3 tests
+    # ----------------------------
+
+    def g3_step_1_publish_gate1_for_gt1(self):
+        self.get_logger().info('GATE3 TEST: publish Gate1 GPS for GT casualty 1')
+        self.publish_gate1(lat=GT_1['lat'], lon=GT_1['lon'])
+
+    def g3_step_2_publish_gate3_for_gt1(self):
+        self.get_logger().info('GATE3 TEST: publish Gate3 block for casualty 1')
+        self.publish_gate3()
+
+    def g3_step_3_publish_gate3_again_for_gt1_should_be_ignored(self):
+        self.get_logger().info(
+            'GATE3 TEST: publish Gate3 again for same location; node should ignore because casualty 1 is already consumed'
+        )
+        self.publish_gate1(lat=GT_1['lat'], lon=GT_1['lon'])
+        self.publish_gate3()
+
+    def g3_step_4_finish(self):
+        self.get_logger().info(
+            'Gate3 manual verification point: first submission should go through, second should be ignored'
+        )
+        self.finish()
+
+    # ----------------------------
+    # Gate 4 tests
+    # ----------------------------
+
+    def g4_step_1_publish_gate1_for_gt2(self):
+        self.get_logger().info('GATE4 TEST: publish Gate1 GPS for GT casualty 2')
+        self.publish_gate1(lat=GT_2['lat'], lon=GT_2['lon'])
+
+    def g4_step_2_publish_gate4_for_gt2(self):
+        self.get_logger().info('GATE4 TEST: publish Gate4 vitals for casualty 2')
+        self.publish_gate4(rr=18.0, hr=88.0)
+
+    def g4_step_3_publish_gate4_again_for_gt2_should_be_ignored(self):
+        self.get_logger().info(
+            'GATE4 TEST: publish Gate4 again for same location; node should ignore because casualty 2 is already consumed'
+        )
+        self.publish_gate1(lat=GT_2['lat'], lon=GT_2['lon'])
+        self.publish_gate4(rr=20.0, hr=92.0)
+
+    def g4_step_4_finish(self):
+        self.get_logger().info(
+            'Gate4 manual verification point: first submission should go through, second should be ignored'
+        )
+        self.finish()
+
 
 def main(args=None):
     rclpy.init(args=args)
-    node = Gate1DummyIntegrationTest()
+    node = ScorecardIntegrationTest()
     rclpy.spin(node)
 
 

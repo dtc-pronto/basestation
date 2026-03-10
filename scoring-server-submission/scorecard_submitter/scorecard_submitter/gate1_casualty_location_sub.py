@@ -236,6 +236,8 @@ class CasualtyLocationSub(Node):
             system=robot
         )
 
+        self.get_logger().info(f"Response Code: {response.status_code}")
+
         if response.status_code != 200:
             self.get_logger().error(
                 f"[{robot}] location_report failed: "
