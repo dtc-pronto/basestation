@@ -8,7 +8,7 @@ from rclpy.node import Node
 
 from dtc_msgs.msg import Gate1, Gate3
 from helpers import gps_distance
-from submission import trauma_report
+from submission import trauma_report, submit_image
 
 
 UGV = ['deimos', 'phobos', 'titania', 'oberon']
@@ -31,11 +31,15 @@ class AssessmentReportNode(Node):
             '/tmp/gate3_submitted_ids.json'
         )
         self.declare_parameter('gps_threshold', 5.0)
+        self.declare_parameter('image_save_dir', '/home/dtc/data/gate3_images')
 
         self.robots = self.get_parameter('robot_names').value
         self.gps_threshold = float(self.get_parameter('gps_threshold').value)
         self.ground_truth_path = self.get_parameter('ground_truth_gps_database_path').value
         self.submitted_ids_path = self.get_parameter('submitted_ids_path').value
+        self.image_save_dir = self.get_parameter('image_save_dir').value
+
+        os.makedirs(self.image_save_dir, exist_ok=True)
 
         self.current_gps = {
             robot: {"latitude": None, "longitude": None}
@@ -196,6 +200,27 @@ class AssessmentReportNode(Node):
         )
         return True
 
+    def save_compressed_image(self, msg: Gate3, casualty_id: int, robot: str) -> str | None:
+        try:
+            if not msg.image.data:
+                self.get_logger().warn(f"[{robot}] No compressed image data for casualty {casualty_id}")
+                return None
+
+            filename = f"{casualty_id}_{robot}_gate3.jpg"
+            img_path = os.path.join(self.image_save_dir, filename)
+
+            with open(img_path, "wb") as f:
+                f.write(bytes(msg.image.data))
+
+            self.get_logger().info(f"[{robot}] Saved Gate3 image to {img_path}")
+            return img_path
+
+        except Exception as e:
+            self.get_logger().error(
+                f"[{robot}] Failed to save image for casualty {casualty_id}: {e}"
+            )
+            return None
+
     def assessment_callback(self, msg: Gate3, robot: str):
         lat = self.current_gps[robot]["latitude"]
         lon = self.current_gps[robot]["longitude"]
@@ -256,6 +281,36 @@ class AssessmentReportNode(Node):
                 f"[{robot}] One or more Gate3 submissions failed for casualty {casualty_id}"
             )
             return
+
+        img_path = self.save_compressed_image(msg, casualty_id, robot)
+        if img_path is None:
+            self.get_logger().error(
+                f"[{robot}] Image save failed for casualty {casualty_id}; not marking as submitted"
+            )
+            return
+
+        try:
+            image_response = submit_image(
+                image_path=img_path,
+                time=0,
+                time_now=0,
+                id=casualty_id
+            )
+        except Exception as e:
+            self.get_logger().error(
+                f"[{robot}] submit_image exception for casualty {casualty_id}: {e}"
+            )
+            return
+
+        if image_response.status_code != 200:
+            self.get_logger().error(
+                f"[{robot}] submit_image failed: {image_response.status_code} {image_response.text}"
+            )
+            return
+
+        self.get_logger().info(
+            f"[{robot}] Submitted image for casualty {casualty_id}"
+        )
 
         self.submitted_ids.add(casualty_id)
         self._save_submitted_ids()

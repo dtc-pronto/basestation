@@ -9,7 +9,7 @@ from rclpy.node import Node
 
 from dtc_msgs.msg import Gate1, Gate2, Gate3
 from helpers import gps_distance
-from submission import hmt_location_report, hmt_assessment_report
+from submission import hmt_location_report, hmt_assessment_report, submit_image
 
 
 UGV = ['deimos', 'phobos', 'titania', 'oberon']
@@ -25,10 +25,14 @@ class HMTNode(Node):
         )
         self.declare_parameter('gps_threshold', 5.0)
         self.declare_parameter('debug_data_path', '/tmp/hmt_debug')
+        self.declare_parameter('image_save_dir', '/home/dtc/data/hmt_images')
 
         self.robots = self.get_parameter('robot_names').value
         self.threshold = float(self.get_parameter('gps_threshold').value)
         debug_data_path = self.get_parameter('debug_data_path').value
+        self.image_save_dir = self.get_parameter('image_save_dir').value
+
+        os.makedirs(self.image_save_dir, exist_ok=True)
 
         self.get_logger().info(f"HMT GPS match threshold: {self.threshold} m")
 
@@ -191,7 +195,7 @@ class HMTNode(Node):
             casualty_id, dist = self._best_match(lat, lon)
 
             if casualty_id is not None:
-                cid = self._ensure_detected_entry(casualty_id, lat, lon, robot)
+                self._ensure_detected_entry(casualty_id, lat, lon, robot)
                 self._save_detected_people()
 
                 self.append_match_log({
@@ -207,7 +211,7 @@ class HMTNode(Node):
                 return casualty_id, dist, False
 
             new_id = self._next_casualty_id()
-            cid = self._ensure_detected_entry(new_id, lat, lon, robot)
+            self._ensure_detected_entry(new_id, lat, lon, robot)
             self._save_detected_people()
 
             self.append_match_log({
@@ -221,6 +225,31 @@ class HMTNode(Node):
                 "source": None,
             })
             return new_id, float('inf'), True
+
+    # -------------------------------------------------
+    # Image helper
+    # -------------------------------------------------
+
+    def save_compressed_image(self, image_msg, casualty_id: int, robot: str, suffix: str) -> str | None:
+        try:
+            if not image_msg.data:
+                self.get_logger().warn(f"[{robot}] No compressed image data for casualty {casualty_id}")
+                return None
+
+            filename = f"{casualty_id}_{robot}_{suffix}.jpg"
+            img_path = os.path.join(self.image_save_dir, filename)
+
+            with open(img_path, "wb") as f:
+                f.write(bytes(image_msg.data))
+
+            self.get_logger().info(f"[{robot}] Saved image to {img_path}")
+            return img_path
+
+        except Exception as e:
+            self.get_logger().error(
+                f"[{robot}] Failed to save image for casualty {casualty_id}: {e}"
+            )
+            return None
 
     # -------------------------------------------------
     # Callbacks
@@ -277,18 +306,51 @@ class HMTNode(Node):
             f"[{robot}] Matched detected person {casualty_id} at {dist:.2f}m, submitting HMT casualty"
         )
 
-        response = hmt_location_report(
-            lat=lat,
-            lon=lon,
-            category=int(msg.category),
-            time_ago=0.0,
-            id=casualty_id,
-            system=robot
-        )
+        try:
+            response = hmt_location_report(
+                lat=lat,
+                lon=lon,
+                category=int(msg.category),
+                time_ago=0.0,
+                id=casualty_id,
+                system=robot
+            )
+        except Exception as e:
+            self.get_logger().error(
+                f"[{robot}] hmt_location_report exception for casualty {casualty_id}: {e}"
+            )
+            return
 
         if response.status_code != 200:
             self.get_logger().error(
                 f"[{robot}] hmt/casualty failed: {response.status_code} {response.text}"
+            )
+            return
+
+        img_path = self.save_compressed_image(msg.image, casualty_id, robot, "gate2_hmt")
+        if img_path is None:
+            self.get_logger().error(
+                f"[{robot}] Image save failed for HMT casualty {casualty_id}; not marking submitted"
+            )
+            return
+
+        try:
+            image_response = submit_image(
+                image_path=img_path,
+                time=0,
+                time_now=0,
+                id=casualty_id
+            )
+        except Exception as e:
+            self.get_logger().error(
+                f"[{robot}] submit_image exception for HMT casualty {casualty_id}: {e}"
+            )
+            return
+
+        if image_response.status_code != 200:
+            self.get_logger().error(
+                f"[{robot}] submit_image failed for HMT casualty {casualty_id}: "
+                f"{image_response.status_code} {image_response.text}"
             )
             return
 
@@ -297,7 +359,7 @@ class HMTNode(Node):
             self._save_detected_people()
 
         self.get_logger().info(
-            f"[{robot}] Submitted HMT casualty for detected person {casualty_id}"
+            f"[{robot}] Submitted HMT casualty and image for detected person {casualty_id}"
         )
 
     def gate3_callback(self, msg: Gate3, robot: str):
@@ -363,13 +425,21 @@ class HMTNode(Node):
 
         all_ok = True
         for field_type, value in fields:
-            response = hmt_assessment_report(
-                type=field_type,
-                value=int(value),
-                time_ago=0.0,
-                id=casualty_id,
-                system=robot
-            )
+            try:
+                response = hmt_assessment_report(
+                    type=field_type,
+                    value=int(value),
+                    time_ago=0.0,
+                    id=casualty_id,
+                    system=robot
+                )
+            except Exception as e:
+                self.get_logger().error(
+                    f"[{robot}] hmt_assessment_report exception for {field_type}: {e}"
+                )
+                all_ok = False
+                continue
+
             if response.status_code != 200:
                 self.get_logger().error(
                     f"[{robot}] hmt/assessment failed for {field_type}: "
@@ -380,12 +450,39 @@ class HMTNode(Node):
         if not all_ok:
             return
 
+        img_path = self.save_compressed_image(msg.image, casualty_id, robot, "gate3_hmt")
+        if img_path is None:
+            self.get_logger().error(
+                f"[{robot}] Image save failed for HMT assessment {casualty_id}; not marking submitted"
+            )
+            return
+
+        try:
+            image_response = submit_image(
+                image_path=img_path,
+                time=0,
+                time_now=0,
+                id=casualty_id
+            )
+        except Exception as e:
+            self.get_logger().error(
+                f"[{robot}] submit_image exception for HMT assessment {casualty_id}: {e}"
+            )
+            return
+
+        if image_response.status_code != 200:
+            self.get_logger().error(
+                f"[{robot}] submit_image failed for HMT assessment {casualty_id}: "
+                f"{image_response.status_code} {image_response.text}"
+            )
+            return
+
         with self.mutex:
             self.detected_people[cid]["assessment_submitted"] = True
             self._save_detected_people()
 
         self.get_logger().info(
-            f"[{robot}] Submitted HMT assessment for detected person {casualty_id}"
+            f"[{robot}] Submitted HMT assessment and image for detected person {casualty_id}"
         )
 
 
