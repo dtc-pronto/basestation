@@ -30,10 +30,10 @@ class CasualtyImageNode(Node):
             if robot in UGV:
                 self.subscriptions_list.append(self.create_subscription(
                     CasualtyImage,
-                    f'/{robot}/casualty_image',
+                    f'/{robot}/triage_report/gate3',
                     lambda msg, r=robot: self.image_callback(msg, r),
                     10))
-                self.get_logger().info(f"Subscribed to /{robot}/casualty_image")
+                self.get_logger().info(f"Subscribed to /{robot}/triage_report/gate3")
 
     def image_callback(self, msg: CasualtyImage, robot: str):
         casualty_id = msg.casualty_id

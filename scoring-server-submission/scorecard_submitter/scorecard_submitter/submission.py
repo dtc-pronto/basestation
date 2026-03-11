@@ -9,33 +9,50 @@ total_init_pos = 0
 total_init_supp = 0
 total_update = 0
 
+import os
+import requests
+from dotenv import load_dotenv
+
+
 def submit_image(image_path, time, time_now, id):
-    # Load .env file
     load_dotenv()
-    print("Submitting Image")
-    TOKEN = os.getenv("TOKEN")
-    BASE_URL = os.getenv("BASE_URL")
+
+    token = os.getenv("TOKEN")
+    base_url = os.getenv("BASE_URL")
+
+    if not token:
+        raise RuntimeError("TOKEN is not set")
+    if not base_url:
+        raise RuntimeError("BASE_URL is not set")
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"Image path does not exist: {image_path}")
 
     headers = {
         "accept": "application/json",
-        "Authorization": TOKEN,
-    }
-
-    files = {
-        'file': open(image_path, 'rb')
+        "Authorization": token,
     }
 
     data = {
-        "casualty_id": id,
+        "casualty_id": int(id),
         "team": "PennPRONTO",
         "system": "JackalNVILA",
-        "time_ago": max(time - time_now, 0),
+        "time_ago": max(time_now - time, 0),
     }
 
-    r = requests.post(f"{BASE_URL}/api/casualty_image", headers=headers, files=files, data=data)
-    print(r.status_code, r.json())
-    return r
+    with open(image_path, "rb") as f:
+        files = {
+            "file": (os.path.basename(image_path), f, "image/jpeg")
+        }
 
+        response = requests.post(
+            f"{base_url}/api/casualty_image",
+            headers=headers,
+            files=files,
+            data=data,
+            timeout=30
+        )
+
+    return response
 
 def convert_to_enum(value, key=None):
     # value = value.lower()

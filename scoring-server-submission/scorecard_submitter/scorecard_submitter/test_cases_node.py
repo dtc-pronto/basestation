@@ -26,7 +26,7 @@ class ScorecardIntegrationTest(Node):
         self.declare_parameter('debug_data_path', '/tmp/casualty_debug')
         self.declare_parameter('uav_robot', 'dione')
         self.declare_parameter('ugv_robot', 'deimos')
-        self.declare_parameter('test_gate', 5)
+        self.declare_parameter('test_gate', 2)
 
         self.debug_data_path = self.get_parameter('debug_data_path').value
         self.uav_robot = self.get_parameter('uav_robot').value

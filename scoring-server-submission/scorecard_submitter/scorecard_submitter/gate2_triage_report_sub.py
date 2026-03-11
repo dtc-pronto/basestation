@@ -8,7 +8,7 @@ from rclpy.node import Node
 
 from dtc_msgs.msg import Gate1, Gate2
 from helpers import gps_distance
-from submission import triage_report
+from submission import triage_report, submit_image
 
 
 UGV = ['deimos', 'phobos', 'titania', 'oberon']
@@ -31,11 +31,15 @@ class TriageReportSub(Node):
             '/tmp/gate2_submitted_ids.json'
         )
         self.declare_parameter('gps_threshold', 5.0)
+        self.declare_parameter('image_save_dir', '/home/dtc/data/triage_images')
 
         self.robots = self.get_parameter('robot_names').value
         self.gps_threshold = float(self.get_parameter('gps_threshold').value)
         self.ground_truth_path = self.get_parameter('ground_truth_gps_database_path').value
         self.submitted_ids_path = self.get_parameter('submitted_ids_path').value
+        self.image_save_dir = self.get_parameter('image_save_dir').value
+
+        os.makedirs(self.image_save_dir, exist_ok=True)
 
         # Latest Gate1 GPS per robot
         self.current_gps = {
@@ -162,7 +166,6 @@ class TriageReportSub(Node):
         for casualty in self.ground_truth_database:
             cid = casualty["casualty_id"]
 
-            # Skip already submitted / consumed entries
             if cid in self.submitted_ids:
                 continue
 
@@ -179,6 +182,27 @@ class TriageReportSub(Node):
             return matched_id, min_dist
 
         return None, min_dist
+
+    def save_compressed_image(self, msg: Gate2, casualty_id: int, robot: str) -> str | None:
+        try:
+            if not msg.image.data:
+                self.get_logger().warn(f"[{robot}] No compressed image data for casualty {casualty_id}")
+                return None
+
+            filename = f"{casualty_id}_{robot}_gate2.jpg"
+            img_path = os.path.join(self.image_save_dir, filename)
+
+            with open(img_path, "wb") as f:
+                f.write(bytes(msg.image.data))
+
+            self.get_logger().info(f"[{robot}] Saved Gate2 image to {img_path}")
+            return img_path
+
+        except Exception as e:
+            self.get_logger().error(
+                f"[{robot}] Failed to save image for casualty {casualty_id}: {e}"
+            )
+            return None
 
     def gps_callback(self, msg: Gate1, robot: str):
         self.current_gps[robot]["latitude"] = float(msg.latitude)
@@ -218,11 +242,17 @@ class TriageReportSub(Node):
             f"[{robot}] Matched unresolved casualty {casualty_id} at {dist:.2f} m, submitting triage"
         )
 
-        response = triage_report(
-            category=msg.category.value,
-            id=casualty_id,
-            system=robot
-        )
+        try:
+            response = triage_report(
+                category=msg.category,
+                id=casualty_id,
+                system=robot
+            )
+        except Exception as e:
+            self.get_logger().error(
+                f"[{robot}] triage_report exception for casualty {casualty_id}: {e}"
+            )
+            return
 
         if response.status_code != 200:
             self.get_logger().error(
@@ -230,13 +260,46 @@ class TriageReportSub(Node):
             )
             return
 
-        # Mark as consumed only after successful submission
+        self.get_logger().info(
+            f"[{robot}] Submitted triage for casualty {casualty_id}"
+        )
+
+        img_path = self.save_compressed_image(msg, casualty_id, robot)
+        if img_path is None:
+            self.get_logger().error(
+                f"[{robot}] Image save failed for casualty {casualty_id}; not marking as resolved"
+            )
+            return
+
+        try:
+            image_response = submit_image(
+                image_path=img_path,
+                time=0,
+                time_now=0,
+                id=casualty_id
+            )
+        except Exception as e:
+            self.get_logger().error(
+                f"[{robot}] submit_image exception for casualty {casualty_id}: {e}"
+            )
+            return
+
+        if image_response.status_code != 200:
+            self.get_logger().error(
+                f"[{robot}] submit_image failed: {image_response.status_code} {image_response.text}"
+            )
+            return
+
+        self.get_logger().info(
+            f"[{robot}] Submitted image for casualty {casualty_id}"
+        )
+
+        # Mark as consumed only after both triage + image submission succeed
         self.submitted_ids.add(casualty_id)
         self._save_submitted_ids()
 
         self.get_logger().info(
-            f"[{robot}] Submitted triage for casualty {casualty_id}. "
-            f"This ID is now marked as resolved and will be ignored in future matches."
+            f"[{robot}] Casualty {casualty_id} fully submitted and now marked as resolved"
         )
 
 
