@@ -54,7 +54,7 @@ class SystemLocationSub(Node):
                 self.get_logger().info(f"Subscribed to /{robot}/mavros/fix for UAV")
             elif robot in UGV:
                 self.subscription_list.append(self.create_subscription(
-                    Gate1, f"/{robot}/system_location", lambda msg, robot=robot: self.UGV_callback(msg, robot), 1)
+                    NavSatFix, f"/{robot}/dgps/antenna1/fix", lambda msg, robot=robot: self.UGV_callback(msg, robot), 1)
                     )
                 self.get_logger().info(f"Subscribed to /{robot}/ublox/fix for UGV")
 
