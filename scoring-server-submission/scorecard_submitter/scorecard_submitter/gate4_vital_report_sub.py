@@ -2,13 +2,14 @@
 import csv
 import json
 import os
+from datetime import datetime
 
 import rclpy
 from rclpy.node import Node
 
 from dtc_msgs.msg import Gate1, Gate4
 from helpers import gps_distance
-from submission import vitals_report
+from submission import vitals_report, submit_image
 
 
 UGV = ['deimos', 'phobos', 'titania', 'oberon']
@@ -24,11 +25,15 @@ class VitalsReportNode(Node):
         )
         self.declare_parameter(
             'ground_truth_gps_database_path',
-            '/home/dtc/data/casualty_gt_db.csv'
+            '/home/dtc/data/casualty_gt_db_gate4.csv'
         )
         self.declare_parameter(
             'submitted_ids_path',
             '/tmp/gate4_submitted_ids.json'
+        )
+        self.declare_parameter(
+            'image_cache_path',
+            '/tmp/gate4_casualty_images'
         )
         self.declare_parameter('gps_threshold', 5.0)
 
@@ -36,8 +41,10 @@ class VitalsReportNode(Node):
         self.gps_threshold = float(self.get_parameter('gps_threshold').value)
         self.ground_truth_path = self.get_parameter('ground_truth_gps_database_path').value
         self.submitted_ids_path = self.get_parameter('submitted_ids_path').value
+        self.image_cache_path = self.get_parameter('image_cache_path').value
 
-        # Latest Gate1 GPS per robot
+        os.makedirs(self.image_cache_path, exist_ok=True)
+
         self.current_gps = {
             robot: {"latitude": None, "longitude": None}
             for robot in self.robots
@@ -200,6 +207,62 @@ class VitalsReportNode(Node):
         )
         return True
 
+    def _submit_gate4_image(self, robot: str, casualty_id: int, msg: Gate4, time_ago: float):
+        if not msg.image.data:
+            self.get_logger().warn(
+                f"[{robot}] Gate4 image is empty for casualty {casualty_id}"
+            )
+            return True
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+
+        ext = '.jpg'
+        if msg.image.format:
+            fmt = msg.image.format.lower()
+            if 'png' in fmt:
+                ext = '.png'
+            elif 'jpeg' in fmt or 'jpg' in fmt:
+                ext = '.jpg'
+
+        image_path = os.path.join(
+            self.image_cache_path,
+            f"{robot}_casualty_{casualty_id}_{timestamp}{ext}"
+        )
+
+        try:
+            with open(image_path, 'wb') as f:
+                f.write(msg.image.data)
+        except Exception as e:
+            self.get_logger().error(
+                f"[{robot}] Failed to save Gate4 image for casualty {casualty_id}: {e}"
+            )
+            return False
+
+        try:
+            time_now = self.get_clock().now().to_msg().sec
+            response = submit_image(
+                image_path=image_path,
+                time=time_ago,
+                time_now=time_now,
+                id=casualty_id
+            )
+        except Exception as e:
+            self.get_logger().error(
+                f"[{robot}] submit_image raised exception for casualty {casualty_id}: {e}"
+            )
+            return False
+
+        if response.status_code != 200:
+            self.get_logger().error(
+                f"[{robot}] submit_image failed: {response.status_code} {response.text}"
+            )
+            return False
+
+        self.get_logger().info(
+            f"[{robot}] Submitted Gate4 image for casualty {casualty_id}"
+        )
+        return True
+
     def gate4_callback(self, msg: Gate4, robot: str):
         lat = self.current_gps[robot]["latitude"]
         lon = self.current_gps[robot]["longitude"]
@@ -223,12 +286,11 @@ class VitalsReportNode(Node):
                 )
             return
 
-        # Hardcoded for now, same pattern as your other gates
         time_ago = 0.0
 
         self.get_logger().info(
             f"[{robot}] Matched casualty {casualty_id} at {dist:.1f}m, "
-            f"submitting Gate4 vitals block hr={msg.hr:.2f}, rr={msg.rr:.2f}"
+            f"submitting Gate4 block hr={msg.hr:.2f}, rr={msg.rr:.2f}"
         )
 
         all_ok = True
@@ -248,6 +310,15 @@ class VitalsReportNode(Node):
             casualty_id=casualty_id,
             vital_type='hr',
             value=msg.hr,
+            time_ago=time_ago
+        )
+        if not ok:
+            all_ok = False
+
+        ok = self._submit_gate4_image(
+            robot=robot,
+            casualty_id=casualty_id,
+            msg=msg,
             time_ago=time_ago
         )
         if not ok:

@@ -24,7 +24,7 @@ class TriageReportSub(Node):
         )
         self.declare_parameter(
             'ground_truth_gps_database_path',
-            '/home/dtc/data/casualty_gt_db.csv'
+            '/home/dtc/data/casualty_gt_db_gate2.csv'
         )
         self.declare_parameter(
             'submitted_ids_path',

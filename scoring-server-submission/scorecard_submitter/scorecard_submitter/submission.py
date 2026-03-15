@@ -594,5 +594,4 @@ def parse_report_string(report_str):
     #pretty print the payload
     return payload
 
-    
-    
+triage_report(1,1, "deimos")
