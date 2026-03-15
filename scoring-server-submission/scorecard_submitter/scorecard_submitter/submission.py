@@ -110,30 +110,37 @@ def start_run(content: dict):
 
 # All gates and lanes
 # type: 0 for UGV, 1 for UAV
-def post_system_location(lat, lon, alt, system, type):
+def post_system_location(lat, lon, alt, system, sys_type):
     load_dotenv()
     print("Posting system location...")
+
     TOKEN = os.getenv("TOKEN")
     BASE_URL = os.getenv("BASE_URL")
 
-    url = f"{BASE_URL}/api/system_location"
+    url = f"{BASE_URL.rstrip('/')}/api/system_location"
     headers = {
         "accept": "application/json",
         "Authorization": TOKEN,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     content = {
-      "team": "PennPRONTO",
-      "system": system,
-      "type": type,
-      "latitude": lat,
-      "longitude": lon,
-      "altitude": alt
+        "team": "PennPRONTO",
+        "system": system,
+        "type": sys_type,
+        "latitude": lat,
+        "longitude": lon,
+        "altitude": alt,
     }
 
-    r = requests.post(url, headers=headers, json=content)
-    print(r.status_code, r.json())
+    r = requests.post(url, headers=headers, json=content, timeout=5.0)
+
+    try:
+        body = r.json()
+    except requests.exceptions.JSONDecodeError:
+        body = r.text
+
+    print(f"POST {url} -> {r.status_code} {body}")
     return r
 
 # Gate 1: Location report

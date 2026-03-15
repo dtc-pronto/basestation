@@ -96,7 +96,7 @@ class SystemLocationSub(Node):
                 lon=self.latest_location[robot].longitude,
                 alt=self.latest_location[robot].altitude,
                 system=robot,
-                type='1' if robot in UAV else '0'
+                sys_type=1 if robot in UAV else 0
             )
             if response.status_code == 200:
                 self.get_logger().info(f"Successfully posted location for {robot}")
