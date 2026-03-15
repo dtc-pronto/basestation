@@ -31,6 +31,8 @@ RUN sudo apt update && sudo apt install -y \
  python3-defusedxml
 
 COPY ./scoring-server-submission ws/src/scoring-server-submission
+RUN sudo apt install ros-jazzy-smach
+COPY ./watchstate ws/src/MOCHA/interface_rajant/thirdParty/watchstate
 
 RUN /bin/bash -c "\
     source /opt/ros/jazzy/setup.bash && \

@@ -47,6 +47,8 @@ CLAUDE.md
 rosbags/
 data/
 
+*.jar
+
 # zenoh-router
 zenoh-router.json5
 zenoh.json5
