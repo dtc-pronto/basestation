@@ -23,7 +23,7 @@ Might block itself for some of the callbacks. Needs to be tested
 """
 
 UAV = ['dione']
-UGV = ['deimos', 'phobos', 'titania', 'oberon']
+UGV = ['deimos', 'phobos', 'titania', 'oberon', 'ares', 'aphrodite']
 class SystemLocationSub(Node):
     def __init__(self):
         super().__init__('system_location_submitter')
@@ -31,7 +31,7 @@ class SystemLocationSub(Node):
         self.declare_parameter('rate', 2)
         self.rate = self.get_parameter('rate').value
 
-        self.declare_parameter('robots', ['deimos', 'phobos', 'titania', 'oberon', 'dione'])
+        self.declare_parameter('robots', ['deimos', 'phobos', 'titania', 'oberon', 'dione', 'ares', 'aphrodite'])
         self.robots = self.get_parameter('robots').value
         
         self.latest_location = {robot: None for robot in self.robots}
@@ -99,7 +99,7 @@ class SystemLocationSub(Node):
                 sys_type=1 if robot in UAV else 0
             )
             if response.status_code == 200:
-                self.get_logger().info(f"Successfully posted location for {robot}")
+                #self.get_logger().info(f"Successfully posted location for {robot}")
                 break
             else:
                 self.get_logger().error(f"Failed to post location for {robot}: {response.status_code} - {response.text}")

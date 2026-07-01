@@ -12,7 +12,7 @@ from helpers import gps_distance
 from submission import vitals_report, submit_image
 
 
-UGV = ['deimos', 'phobos', 'titania', 'oberon']
+UGV = ['deimos', 'phobos', 'titania', 'oberon', 'ares', 'aphrodite']
 
 
 class VitalsReportNode(Node):
@@ -21,7 +21,7 @@ class VitalsReportNode(Node):
 
         self.declare_parameter(
             'robot_names',
-            ['deimos', 'phobos', 'titania', 'oberon']
+            ['deimos', 'phobos', 'titania', 'oberon', 'ares', 'aphrodite']
         )
         self.declare_parameter(
             'ground_truth_gps_database_path',

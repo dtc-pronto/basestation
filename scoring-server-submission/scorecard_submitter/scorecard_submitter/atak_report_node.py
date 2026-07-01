@@ -6,6 +6,7 @@ import rclpy
 from rclpy.node import Node
 import cv2
 
+from std_msgs.msg import String
 from dtc_msgs.msg import CasualtyFixArray, Gate1, Gate2, Gate3, Gate4, CasualtyImage, FullReport
 from sensor_msgs.msg import CompressedImage
 from helpers import gps_distance
@@ -13,7 +14,7 @@ from cv_bridge import CvBridge
 
 
 UAV = ['dione']
-UGV = ['deimos', 'phobos', 'titania', 'oberon']
+UGV = ['deimos', 'phobos', 'titania', 'oberon', 'ares', 'aphrodite']
 
 
 class ATAKReportNode(Node):
@@ -35,7 +36,7 @@ class ATAKReportNode(Node):
 
         self.declare_parameter(
             'robot_names',
-            ['dione', 'deimos', 'phobos', 'titania', 'oberon']
+            ['dione', 'deimos', 'phobos', 'titania', 'oberon', 'ares', 'aphrodite']
         )
         self.declare_parameter('gps_threshold', 5.0)
 
@@ -63,7 +64,7 @@ class ATAKReportNode(Node):
                 self.subscriptions_list.append(
                     self.create_subscription(
                         CasualtyFixArray,
-                        f'/{robot}/casualty_info',
+                        f'/{robot}/glider/casualty/fix',
                         lambda msg, r=robot: self.uav_callback(msg, r),
                         10
                     )
@@ -103,14 +104,14 @@ class ATAKReportNode(Node):
                         10
                     )
                 )
-                self.subscriptions_list.append(
-                    self.create_subscription(
-                        CasualtyImage,
-                        f'/{robot}/casualty_image',
-                        lambda msg, r=robot: self.image_callback(msg, r),
-                        10
-                    )
-                )
+                #self.subscriptions_list.append(
+                #    self.create_subscription(
+                #        CasualtyImage,
+                #        f'/{robot}/casualty_image',
+                #        lambda msg, r=robot: self.image_callback(msg, r),
+                #        10
+                #    )
+                #)
                 self.get_logger().info(f"Subscribed to /{robot} Gate1/Gate2/Gate3/Gate4/image topics")
 
     # -------------------------------------------------------------------------
@@ -118,19 +119,56 @@ class ATAKReportNode(Node):
     # -------------------------------------------------------------------------
 
     def uav_callback(self, msg: CasualtyFixArray, robot: str):
+        reports_to_publish = []
+
         with self.mutex:
-            self.uav_detections = [
-                {
-                    "casualty_id": int(c.casualty_id),
-                    "lat": float(c.location.latitude),
-                    "lon": float(c.location.longitude),
-                }
-                for c in msg.casualties
-            ]
+            self.uav_detections = []
+
+            for c in msg.casualties:
+                casualty_id = int(c.casualty_id)
+                lat = float(c.location.latitude)
+                lon = float(c.location.longitude)
+
+                self.uav_detections.append({
+                    "casualty_id": casualty_id,
+                    "lat": lat,
+                    "lon": lon,
+                })
+
+                old_record = self.casualty_records.get(casualty_id)
+                should_publish = True
+
+                if old_record is None:
+                    should_publish = True
+                else:
+                    old_lat = old_record["lat"]
+                    old_lon = old_record["lon"]
+                    if old_lat is None or old_lon is None:
+                        should_publish = True
+                    else:
+                        try:
+                            moved = gps_distance(lat, lon, old_lat, old_lon)
+                            if moved > 1.0:
+                                should_publish = True
+                        except ValueError:
+                            should_publish = True
+
+                record = self._get_or_create_record(casualty_id, lat, lon, robot)
+
+                if record.get("robot") is None or record.get("robot") in UAV:
+                    record["robot"] = robot
+
+                if should_publish:
+                    report_msg = self._build_full_report(casualty_id)
+                    if report_msg is not None:
+                        reports_to_publish.append((report_msg, casualty_id))
 
         self.get_logger().info(
             f"[{robot}] Updated UAV detections: {len(self.uav_detections)} casualties"
         )
+
+        for report_msg, casualty_id in reports_to_publish:
+            self._publish(report_msg, casualty_id, robot)
 
     # -------------------------------------------------------------------------
     # Matching helpers
@@ -225,17 +263,24 @@ class ATAKReportNode(Node):
         if record is None:
             return None
 
+        source = "ugv_confirmed"
+        if record["robot"] in UAV:
+            source = "uav_provisional"
+
         msg = FullReport()
         msg.casualty_id = int(casualty_id)
-        msg.report = json.dumps({
-            "casualty_id": record["casualty_id"],
-            "lat": record["lat"],
-            "lon": record["lon"],
-            "robot": record["robot"],
-            "category": record["category"],
-            "assessments": record["assessments"],
-            "vitals": record["vitals"],
-        })
+        msg.report = String(
+            data=json.dumps({
+                "casualty_id": record["casualty_id"],
+                "lat": record["lat"],
+                "lon": record["lon"],
+                "robot": record["robot"],
+                "source": source,
+                "category": record["category"],
+                "assessments": record["assessments"],
+                "vitals": record["vitals"],
+            })
+        )
 
         if record["image"] is not None:
             msg.image = record["image"]

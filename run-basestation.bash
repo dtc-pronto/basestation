@@ -60,6 +60,7 @@ docker run -it --rm \
     --privileged \
     -v "/dev:/dev" \
     -v "./data:/home/dtc/data" \
+    -v "./scoring-server-submission:/home/dtc/ws/src/scoring-server-submission" \
     -e RTK=$RTK_ENV \
     -e MOCHA=$MOCHA_ENV \
     -e SENDER=$SENDER_ENV \

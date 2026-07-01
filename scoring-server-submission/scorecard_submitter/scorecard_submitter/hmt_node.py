@@ -12,7 +12,7 @@ from helpers import gps_distance
 from submission import hmt_location_report, hmt_assessment_report, submit_image
 
 
-UGV = ['deimos', 'phobos', 'titania', 'oberon']
+UGV = ['deimos', 'phobos', 'titania', 'oberon', 'ares', 'aphrodite']
 
 
 class HMTNode(Node):
@@ -21,7 +21,7 @@ class HMTNode(Node):
 
         self.declare_parameter(
             'robot_names',
-            ['deimos', 'phobos', 'titania', 'oberon']
+            ['deimos', 'phobos', 'titania', 'oberon', 'ares', 'aphrodite']
         )
         self.declare_parameter('gps_threshold', 5.0)
         self.declare_parameter('debug_data_path', '/tmp/hmt_debug')

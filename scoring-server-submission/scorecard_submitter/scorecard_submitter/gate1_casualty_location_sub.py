@@ -13,7 +13,7 @@ from submission import location_report, submit_image
 
 
 UAV = ['dione']
-UGV = ['deimos', 'phobos', 'titania', 'oberon']
+UGV = ['deimos', 'phobos', 'titania', 'oberon', 'ares', 'aphrodite']
 
 
 class CasualtyLocationSub(Node):
@@ -22,7 +22,7 @@ class CasualtyLocationSub(Node):
 
         self.declare_parameter(
             'robot_names',
-            ['dione', 'deimos', 'phobos', 'titania', 'oberon']
+            ['dione', 'deimos', 'phobos', 'titania', 'oberon', 'ares', 'aphrodite']
         )
         self.declare_parameter('gps_threshold', 5.0)
         self.declare_parameter('debug_data_path', '/tmp/casualty_debug')

@@ -4,19 +4,19 @@ from rclpy.node import Node
 import os
 import cv2
 
-from dtc_msgs.msg import CasualtyImage
+from dtc_msgs.msg import CasualtyFixArray, Gate1, Gate2, Gate3, Gate4, CasualtyImage, FullReport
 from submission import submit_image
 from cv_bridge import CvBridge
 
 
-UGV = ['deimos', 'phobos', 'titania', 'oberon']
+UGV = ['deimos', 'phobos', 'titania', 'oberon', 'ares', 'aphrodite']
 
 
 class CasualtyImageNode(Node):
     def __init__(self):
         super().__init__('casualty_image_node')
 
-        self.declare_parameter('robot_names', ['deimos', 'phobos', 'titania', 'oberon'])
+        self.declare_parameter('robot_names', ['deimos', 'phobos', 'titania', 'oberon', 'ares', 'aphrodite'])
         self.declare_parameter('image_save_path', '/tmp/casualty_images')
 
         self.robots = self.get_parameter('robot_names').value
@@ -65,15 +65,15 @@ class CasualtyImageNode(Node):
 
 
 def main(args=None):
-    rclpy.init(args=args)
-    node = CasualtyImageNode()
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
+    #rclpy.init(args=args)
+    #node = CasualtyImageNode()
+    #try:
+    #    rclpy.spin(node)
+    #except KeyboardInterrupt:
+    #    pass
+    #finally:
+    #    node.destroy_node()
+    #    rclpy.shutdown()
 
 
 if __name__ == '__main__':
