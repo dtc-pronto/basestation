@@ -40,7 +40,7 @@ RUN pip3 install scipy python-dotenv
 RUN sudo apt-get install -y ros-noetic-vision-msgs
 
 # install rtk dependencies
-RUN pip install pyzmq pyserial pyrtcm
+RUN pip3 install pyzmq pyserial pyrtcm
 RUN sudo usermod -a -G dialout $USER
 RUN sudo apt-get install -y ros-noetic-rtcm-msgs
 
