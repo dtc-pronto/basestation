@@ -3,13 +3,14 @@
 source /opt/ros/jazzy/setup.bash
 source ws/install/setup.bash
 ros2 run rmw_zenoh_cpp rmw_zenohd &
+set -e
+echo "RTK_IP:" ${RTK_IP}
 
 GATE1="false"
 GATE2="false"
 GATE3="false"
 GATE4="false"
 GATE5="false"
-
 if [ "$GATE" == "1" ]; then
     echo "Running Gate 1"
     GATE1="true"
@@ -44,7 +45,7 @@ fi
 
 if [ "$RTK" == "true" ]; then
     echo "Launching RTK Broadcaster"
-    ros2 launch rtk_correction broadcaster.launch.py &
+    ros2 launch rtk_correction broadcaster.launch.py ip:=${RTK_IP} port:=${RTK_PORT} &
 fi
 
 wait

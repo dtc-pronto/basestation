@@ -25,10 +25,13 @@ ENV MOCHA=false \
 
 RUN sudo apt update && sudo apt install -y \
  python3-zmq \
+ python3-serial \
  default-jre \
  iputils-ping \
  python3-lz4 \
  python3-defusedxml
+ 
+RUN sudo pip3 install --no-cache-dir pyrtcm --break-system-packages
 
 COPY ./scoring-server-submission ws/src/scoring-server-submission
 RUN sudo apt install ros-jazzy-smach
@@ -43,7 +46,9 @@ RUN echo ". /opt/ros/jazzy/setup.bash" >> /home/dtc/.bashrc \
  && echo "source /home/dtc/ws/install/setup.bash" >> /home/dtc/.bashrc \
  && echo 'export PS1="\[$(tput setaf 2; tput bold)\]\u\[$(tput setaf 7)\]@\[$(tput setaf 3)\]\h\[$(tput setaf 7)\]:\[$(tput setaf 4)\]\W\[$(tput setaf 7)\]$ \[$(tput sgr0)\]"' >> /home/dtc/.bashrc
 
+RUN sudo rm -rf /var/lib/apt/lists/*
+
 COPY --chown=dtc:dtc ./entrypoint.bash /home/dtc/entrypoint.bash
 RUN chmod +x /home/dtc/entrypoint.bash
-
+USER root
 ENTRYPOINT ["/home/dtc/entrypoint.bash"]

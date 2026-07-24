@@ -61,6 +61,7 @@ docker run -it --rm \
     -v "/dev:/dev" \
     -v "./data:/home/dtc/data" \
     -v "./scoring-server-submission:/home/dtc/ws/src/scoring-server-submission" \
+    --env-file ~/basestation/.env \
     -e RTK=$RTK_ENV \
     -e MOCHA=$MOCHA_ENV \
     -e SENDER=$SENDER_ENV \
