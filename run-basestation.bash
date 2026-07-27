@@ -53,20 +53,22 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-xhost +
-docker run -it --rm \
+if docker ps -a --format '{{.Names}}' | grep -q "^basestation$"; then
+    echo "Removing old basestation container"
+    docker rm -f basestation
+fi
+
+docker run --restart unless-stopped \
     --network=host \
     --ipc=host \
     --privileged \
     -v "/dev:/dev" \
     -v "./data:/home/dtc/data" \
     -v "./scoring-server-submission:/home/dtc/ws/src/scoring-server-submission" \
-    --env-file ~/basestation/.env \
+    --env-file "$(dirname "$0")/.env" \
     -e RTK=$RTK_ENV \
     -e MOCHA=$MOCHA_ENV \
     -e SENDER=$SENDER_ENV \
     -e GATE=$GATE_ENV \
-    --name dtc-platform-`hostname`-basestation \
-    dtc-platform-`hostname`:basestation \
-    bash
-xhost -
+    --name basestation \
+    dtc-platform-`hostname`:basestation

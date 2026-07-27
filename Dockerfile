@@ -29,8 +29,9 @@ RUN sudo apt update && sudo apt install -y \
  default-jre \
  iputils-ping \
  python3-lz4 \
- python3-defusedxml
- 
+ python3-defusedxml \
+ iproute2 
+
 RUN sudo pip3 install --no-cache-dir pyrtcm --break-system-packages
 
 COPY ./scoring-server-submission ws/src/scoring-server-submission
@@ -48,7 +49,12 @@ RUN echo ". /opt/ros/jazzy/setup.bash" >> /home/dtc/.bashrc \
 
 RUN sudo rm -rf /var/lib/apt/lists/*
 
+
 COPY --chown=dtc:dtc ./entrypoint.bash /home/dtc/entrypoint.bash
 RUN chmod +x /home/dtc/entrypoint.bash
+
+COPY --chown=dtc:dtc scripts/basestation-supervisor.sh /home/dtc/basestation-supervisor.sh
+RUN chmod +x /home/dtc/basestation-supervisor.sh
+
 USER root
 ENTRYPOINT ["/home/dtc/entrypoint.bash"]

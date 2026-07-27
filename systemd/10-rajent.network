@@ -1,0 +1,6 @@
+# /etc/systemd/network/10-rajant.network
+[Match]
+Name=rajant
+
+[Network]
+Address=10.10.10.10/24
