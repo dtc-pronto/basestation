@@ -1,0 +1,15 @@
+[Unit]
+Description=Basestation Docker container
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=dtc
+WorkingDirectory=/home/dtc/basestation
+ExecStart=/home/dtc/basestation/run-basestation.bash
+ExecStop=/usr/bin/docker stop basestation
+
+[Install]
+WantedBy=multi-user.target
