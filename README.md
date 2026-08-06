@@ -3,7 +3,7 @@
 This repo contains all code that runs on the basestation for the DARPA Triage Challenge. The following packages use ROS2 (Jazzy) and run inside the dedicated basetation container:
 
 - **MOCHA (mesh networking)** — Found in the common repo, MOCHA handles comms between basestation and all other robots.
-- **rtk-corrections** — Found in the common repo, rtk-corrections broadcasts RTCM messages to all our robots to give thier GPS mm level accuracy
+- **rtk-corrections** — Found in the common repo, rtk-corrections broadcasts RTCM messages to all our robots to give thier GPS cm level accuracy
 - **geoviz** — A Mapbox-based live map of robots and casualties
 - **scoring-server-submission** — Recieves casualty/triage/vitals reports from the robots and forwards them to the DARPA scoring server, gate by gate.
 - **dtc-msgs** — Shared message definitions used across the DTC stack
